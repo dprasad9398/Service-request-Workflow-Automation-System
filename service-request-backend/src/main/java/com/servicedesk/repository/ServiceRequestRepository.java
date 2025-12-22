@@ -1,0 +1,51 @@
+package com.servicedesk.repository;
+
+import com.servicedesk.entity.ServiceRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository interface for ServiceRequest entity
+ */
+@Repository
+public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, Long> {
+
+    Optional<ServiceRequest> findByTicketId(String ticketId);
+
+    List<ServiceRequest> findByRequesterId(Long requesterId);
+
+    Page<ServiceRequest> findByRequesterId(Long requesterId, Pageable pageable);
+
+    List<ServiceRequest> findByAssignedToId(Long assignedToId);
+
+    Page<ServiceRequest> findByAssignedToId(Long assignedToId, Pageable pageable);
+
+    List<ServiceRequest> findByStatus(ServiceRequest.RequestStatus status);
+
+    Page<ServiceRequest> findByStatus(ServiceRequest.RequestStatus status, Pageable pageable);
+
+    List<ServiceRequest> findByPriority(ServiceRequest.Priority priority);
+
+    Page<ServiceRequest> findByPriority(ServiceRequest.Priority priority, Pageable pageable);
+
+    @Query("SELECT sr FROM ServiceRequest sr WHERE sr.service.category.id = :categoryId")
+    List<ServiceRequest> findByCategoryId(@Param("categoryId") Long categoryId);
+
+    @Query("SELECT sr FROM ServiceRequest sr WHERE sr.createdAt BETWEEN :startDate AND :endDate")
+    List<ServiceRequest> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(sr) FROM ServiceRequest sr WHERE sr.status = :status")
+    Long countByStatus(@Param("status") ServiceRequest.RequestStatus status);
+
+    @Query("SELECT COUNT(sr) FROM ServiceRequest sr WHERE sr.priority = :priority")
+    Long countByPriority(@Param("priority") ServiceRequest.Priority priority);
+}
