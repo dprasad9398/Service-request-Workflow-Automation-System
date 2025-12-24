@@ -4,15 +4,23 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import UserRoute from './components/UserRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import CreateRequest from './pages/CreateRequest';
+import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import AdminManageRequests from './pages/admin/AdminManageRequests';
+import CreateRequest from './pages/user/CreateRequest';
 import MyRequests from './pages/MyRequests';
 import RequestDetails from './pages/RequestDetails';
 import ApproverDashboard from './pages/ApproverDashboard';
 import AgentDashboard from './pages/AgentDashboard';
+import Unauthorized from './pages/Unauthorized';
+import authService from './services/authService';
 
 const theme = createTheme({
     palette: {
@@ -30,28 +38,84 @@ const PageWithLayout = ({ children }) => {
     return <Layout>{children}</Layout>;
 };
 
+// Root redirect component - redirects to appropriate dashboard based on role
+const RootRedirect = () => {
+    const dashboardRoute = authService.getDashboardRoute();
+    return <Navigate to={dashboardRoute} replace />;
+};
+
 function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <AuthProvider>
-                <Router>
+                <Router
+                    future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true
+                    }}
+                >
                     <Routes>
                         {/* Public routes without layout */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/unauthorized" element={<Unauthorized />} />
 
-                        {/* Protected routes with layout */}
+                        {/* Admin routes - require ROLE_ADMIN */}
+                        <Route
+                            path="/admin/dashboard"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <AdminDashboard />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/users"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <UserManagement />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/requests"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <AdminManageRequests />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+
+                        {/* User routes - require ROLE_USER or ROLE_ADMIN */}
+                        <Route
+                            path="/user/dashboard"
+                            element={
+                                <UserRoute>
+                                    <PageWithLayout>
+                                        <UserDashboard />
+                                    </PageWithLayout>
+                                </UserRoute>
+                            }
+                        />
+
+                        {/* Legacy dashboard route - redirect based on role */}
                         <Route
                             path="/dashboard"
                             element={
                                 <ProtectedRoute>
-                                    <PageWithLayout>
-                                        <Dashboard />
-                                    </PageWithLayout>
+                                    <RootRedirect />
                                 </ProtectedRoute>
                             }
                         />
+
+                        {/* Protected routes with layout - accessible to all authenticated users */}
                         <Route
                             path="/create-request"
                             element={
@@ -73,6 +137,16 @@ function App() {
                             }
                         />
                         <Route
+                            path="/user/requests"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <MyRequests />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
                             path="/request/:id"
                             element={
                                 <ProtectedRoute>
@@ -82,6 +156,8 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+
+                        {/* Role-specific routes */}
                         <Route
                             path="/approvals"
                             element={
@@ -102,7 +178,16 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+                        {/* Root redirect */}
+                        <Route
+                            path="/"
+                            element={
+                                <ProtectedRoute>
+                                    <RootRedirect />
+                                </ProtectedRoute>
+                            }
+                        />
                     </Routes>
                 </Router>
             </AuthProvider>

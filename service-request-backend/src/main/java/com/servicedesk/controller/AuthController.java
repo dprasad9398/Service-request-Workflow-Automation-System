@@ -54,11 +54,16 @@ public class AuthController {
          */
         @PostMapping("/login")
         public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+                System.out.println("=== LOGIN ATTEMPT ===");
+                System.out.println("Username: " + loginRequest.getUsername());
+
                 try {
                         Authentication authentication = authenticationManager.authenticate(
                                         new UsernamePasswordAuthenticationToken(
                                                         loginRequest.getUsername(),
                                                         loginRequest.getPassword()));
+
+                        System.out.println("Authentication successful for: " + loginRequest.getUsername());
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -75,13 +80,25 @@ public class AuthController {
                                         .map(Role::getName)
                                         .collect(Collectors.toList());
 
+                        System.out.println("User roles: " + roles);
+                        System.out.println("=== LOGIN SUCCESS ===");
+
                         return ResponseEntity.ok(new JwtAuthResponse(
                                         jwt,
                                         user.getId(),
                                         user.getUsername(),
                                         user.getEmail(),
                                         roles));
+                } catch (org.springframework.security.authentication.BadCredentialsException e) {
+                        System.err.println("=== LOGIN FAILED: Bad Credentials ===");
+                        System.err.println("Username: " + loginRequest.getUsername());
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(new ApiResponse(false, "Invalid username or password"));
                 } catch (Exception e) {
+                        System.err.println("=== LOGIN FAILED: Unexpected Error ===");
+                        System.err.println("Username: " + loginRequest.getUsername());
+                        System.err.println("Error: " + e.getClass().getName() + " - " + e.getMessage());
+                        e.printStackTrace();
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(new ApiResponse(false, "Invalid username or password"));
                 }

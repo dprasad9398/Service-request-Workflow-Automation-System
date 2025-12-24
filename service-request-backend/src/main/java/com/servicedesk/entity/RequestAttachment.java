@@ -25,6 +25,7 @@ public class RequestAttachment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ServiceRequest request;
 
     @Column(name = "file_name", nullable = false, length = 255)

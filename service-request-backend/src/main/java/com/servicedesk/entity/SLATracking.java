@@ -25,6 +25,7 @@ public class SLATracking {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ServiceRequest request;
 
     @ManyToOne(fetch = FetchType.LAZY)

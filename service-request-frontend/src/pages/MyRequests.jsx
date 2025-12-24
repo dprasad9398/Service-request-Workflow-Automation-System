@@ -55,12 +55,20 @@ const MyRequests = () => {
 
     const loadRequests = async () => {
         setLoading(true);
+        console.log('Fetching requests for user...');
         try {
             const response = await requestService.getMyRequests(page, rowsPerPage);
+            console.log('MyRequests API response:', response);
             setRequests(response.content || []);
             setTotalElements(response.totalElements || 0);
+            console.log('Requests loaded:', response.content?.length || 0);
         } catch (err) {
             console.error('Error loading requests:', err);
+            console.error('Error details:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status
+            });
         } finally {
             setLoading(false);
         }

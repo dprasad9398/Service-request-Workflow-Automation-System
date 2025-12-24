@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ServiceRequestController {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ServiceRequestController.class);
+
     @Autowired
     private ServiceRequestService serviceRequestService;
 
@@ -88,16 +90,24 @@ public class ServiceRequestController {
      * GET /api/requests/my-requests
      */
     @GetMapping("/my-requests")
-    public ResponseEntity<Page<ServiceRequest>> getMyServiceRequests(
+    public ResponseEntity<?> getMyServiceRequests(
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        try {
+            String username = authentication.getName();
+            logger.debug("Fetching requests for user: {}", username);
 
-        // This would require getting user ID from authentication
-        // For now, returning empty response
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<ServiceRequest> requests = serviceRequestService.getAllServiceRequests(pageable);
-        return ResponseEntity.ok(requests);
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<ServiceRequest> requests = serviceRequestService.getMyServiceRequests(username, pageable);
+
+            logger.debug("Found {} requests for user {}", requests.getTotalElements(), username);
+            return ResponseEntity.ok(requests);
+        } catch (Exception e) {
+            logger.error("Error fetching user requests", e);
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error fetching requests: " + e.getMessage()));
+        }
     }
 
     /**

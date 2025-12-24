@@ -25,6 +25,15 @@ public class ServiceRequestService {
     @Autowired
     private ServiceRequestRepository serviceRequestRepository;
 
+    /**
+     * Get my service requests
+     */
+    public Page<ServiceRequest> getMyServiceRequests(String username, Pageable pageable) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+        return serviceRequestRepository.findByRequesterId(user.getId(), pageable);
+    }
+
     @Autowired
     private ServiceCatalogRepository serviceCatalogRepository;
 

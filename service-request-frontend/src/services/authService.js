@@ -1,5 +1,14 @@
 import api from '../api/axios';
 
+// Role constants
+export const ROLES = {
+    ADMIN: 'ROLE_ADMIN',
+    USER: 'ROLE_USER',
+    END_USER: 'ROLE_END_USER',
+    APPROVER: 'ROLE_APPROVER',
+    AGENT: 'ROLE_AGENT'
+};
+
 /**
  * Authentication Service
  * Handles login, register, and user authentication
@@ -63,6 +72,56 @@ const authService = {
     hasRole: (role) => {
         const roles = authService.getUserRoles();
         return roles.includes(role);
+    },
+
+    /**
+     * Get primary role (priority: ADMIN > APPROVER > AGENT > USER/END_USER)
+     */
+    getPrimaryRole: () => {
+        const roles = authService.getUserRoles();
+
+        if (roles.includes(ROLES.ADMIN)) return ROLES.ADMIN;
+        if (roles.includes(ROLES.APPROVER)) return ROLES.APPROVER;
+        if (roles.includes(ROLES.AGENT)) return ROLES.AGENT;
+        if (roles.includes(ROLES.USER)) return ROLES.USER;
+        if (roles.includes(ROLES.END_USER)) return ROLES.END_USER;
+
+        return null;
+    },
+
+    /**
+     * Check if user is admin
+     */
+    isAdmin: () => {
+        return authService.hasRole(ROLES.ADMIN);
+    },
+
+    /**
+     * Check if user is regular user
+     */
+    isUser: () => {
+        return authService.hasRole(ROLES.USER) || authService.hasRole(ROLES.END_USER);
+    },
+
+    /**
+     * Get dashboard route based on role
+     */
+    getDashboardRoute: () => {
+        const primaryRole = authService.getPrimaryRole();
+
+        switch (primaryRole) {
+            case ROLES.ADMIN:
+                return '/admin/dashboard';
+            case ROLES.APPROVER:
+                return '/approvals';
+            case ROLES.AGENT:
+                return '/tasks';
+            case ROLES.USER:
+            case ROLES.END_USER:
+                return '/user/dashboard';
+            default:
+                return '/dashboard';
+        }
     }
 };
 

@@ -108,8 +108,9 @@ const CreateRequest = () => {
                 description: formData.description,
                 priority: formData.priority
             };
-
-            await requestService.createRequest(requestData);
+            console.log("Submitting Request:", requestData);
+            const response = await requestService.createRequest(requestData);
+            console.log("Create Request Response:", response);
             setSuccess(true);
             setTimeout(() => {
                 navigate('/my-requests');

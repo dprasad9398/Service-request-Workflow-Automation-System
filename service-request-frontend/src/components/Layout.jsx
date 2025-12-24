@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import authService, { ROLES } from '../services/authService';
 import {
     AppBar,
     Toolbar,
@@ -18,7 +19,10 @@ import {
     Dashboard as DashboardIcon,
     Assignment,
     Approval,
-    Work
+    Work,
+    People,
+    Category,
+    Add
 } from '@mui/icons-material';
 
 const Layout = ({ children }) => {
@@ -51,19 +55,70 @@ const Layout = ({ children }) => {
                     </Typography>
 
                     <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
+                        {/* Dashboard button - route based on role */}
                         <Button
                             color="inherit"
                             startIcon={<DashboardIcon />}
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => {
+                                const dashboardRoute = authService.getDashboardRoute();
+                                navigate(dashboardRoute);
+                            }}
                             sx={{
-                                backgroundColor: isActive('/dashboard') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                backgroundColor: (isActive('/dashboard') || isActive('/admin/dashboard') || isActive('/user/dashboard')) ? 'rgba(255,255,255,0.1)' : 'transparent'
                             }}
                         >
                             Dashboard
                         </Button>
 
-                        {hasRole('ROLE_END_USER') && (
+                        {/* Admin navigation */}
+                        {authService.hasRole(ROLES.ADMIN) && (
                             <>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<People />}
+                                    onClick={() => navigate('/admin/users')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/users') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Users
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Category />}
+                                    onClick={() => navigate('/admin/service-catalog')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/service-catalog') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Service Catalog
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Assignment />}
+                                    onClick={() => navigate('/admin/requests')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/requests') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    All Requests
+                                </Button>
+                            </>
+                        )}
+
+                        {/* User navigation */}
+                        {(authService.hasRole(ROLES.USER) || authService.hasRole(ROLES.END_USER)) && !authService.hasRole(ROLES.ADMIN) && (
+                            <>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Add />}
+                                    onClick={() => navigate('/create-request')}
+                                    sx={{
+                                        backgroundColor: isActive('/create-request') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    New Request
+                                </Button>
                                 <Button
                                     color="inherit"
                                     startIcon={<Assignment />}
@@ -74,16 +129,10 @@ const Layout = ({ children }) => {
                                 >
                                     My Requests
                                 </Button>
-                                <Button
-                                    color="inherit"
-                                    onClick={() => navigate('/create-request')}
-                                    variant={isActive('/create-request') ? 'outlined' : 'text'}
-                                >
-                                    New Request
-                                </Button>
                             </>
                         )}
 
+                        {/* Approver navigation */}
                         {hasRole('ROLE_APPROVER') && (
                             <Button
                                 color="inherit"
@@ -97,6 +146,7 @@ const Layout = ({ children }) => {
                             </Button>
                         )}
 
+                        {/* Agent navigation */}
                         {hasRole('ROLE_AGENT') && (
                             <Button
                                 color="inherit"

@@ -69,11 +69,30 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(new com.servicedesk.security.CustomAccessDeniedHandler()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Allow all requests without authentication
-                        .anyRequest().permitAll());
+                        // Public endpoints - no authentication required
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/debug/**").permitAll() // Debug endpoints
+
+                        // Admin endpoints - require ROLE_ADMIN
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // User endpoints - require ROLE_USER, ROLE_END_USER, or ROLE_ADMIN
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "END_USER", "ADMIN")
+
+                        // All other API endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
+
+                        // Allow all other requests
+                        .anyRequest().permitAll())
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
