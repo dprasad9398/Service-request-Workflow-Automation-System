@@ -1,6 +1,7 @@
 package com.servicedesk.controller;
 
 import com.servicedesk.dto.AdminRequestDTO;
+import com.servicedesk.dto.AssignDepartmentDTO;
 import com.servicedesk.dto.AssignRequestDTO;
 import com.servicedesk.dto.UpdateStatusDTO;
 import com.servicedesk.entity.RequestStatusHistory;
@@ -72,15 +73,26 @@ public class AdminRequestController {
     @PostMapping("/{id}/assign-department")
     public ResponseEntity<?> assignDepartment(
             @PathVariable Long id,
-            @RequestBody AssignRequestDTO dto) {
+            @RequestBody @jakarta.validation.Valid AssignDepartmentDTO dto) {
         System.out.println("=== ADMIN: Assigning department to request " + id + " ===");
+        System.out.println("Department ID: " + dto.getDepartmentId());
+        System.out.println("Notes: " + dto.getNotes());
 
         try {
-            adminRequestService.assignDepartment(id, dto);
-            return ResponseEntity.ok(Map.of("success", true, "message", "Department assigned successfully"));
-        } catch (Exception e) {
+            AdminRequestDTO updatedRequest = adminRequestService.assignDepartment(id, dto);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Department assigned successfully",
+                    "request", updatedRequest));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error assigning department: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
         }
     }
 

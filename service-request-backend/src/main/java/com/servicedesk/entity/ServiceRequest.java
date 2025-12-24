@@ -130,4 +130,18 @@ public class ServiceRequest {
         CLOSED,
         CANCELLED
     }
+
+    /**
+     * Get category name for JSON serialization
+     * Returns category name from direct category or service's category
+     */
+    @com.fasterxml.jackson.annotation.JsonProperty("categoryName")
+    public String getCategoryName() {
+        if (category != null && category.getName() != null) {
+            return category.getName();
+        } else if (service != null && service.getCategory() != null) {
+            return service.getCategory().getName();
+        }
+        return "N/A";
+    }
 }

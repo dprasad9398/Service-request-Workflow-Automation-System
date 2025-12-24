@@ -24,8 +24,11 @@ public interface ServiceRequestRepository
 
         List<ServiceRequest> findByRequesterId(Long requesterId);
 
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "service", "service.category",
-                        "service.sla" })
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+                        "service", "service.category", "service.sla",
+                        "requester", "assignedTo", "category", "requestType",
+                        "department", "assignedAgent"
+        })
         Page<ServiceRequest> findByRequesterId(Long requesterId, Pageable pageable);
 
         List<ServiceRequest> findByAssignedToId(Long assignedToId);
@@ -33,6 +36,11 @@ public interface ServiceRequestRepository
         Page<ServiceRequest> findByAssignedToId(Long assignedToId, Pageable pageable);
 
         List<ServiceRequest> findByStatus(ServiceRequest.RequestStatus status);
+
+        // Dashboard count methods
+        long countByRequesterId(Long requesterId);
+
+        long countByRequesterIdAndStatus(Long requesterId, ServiceRequest.RequestStatus status);
 
         Page<ServiceRequest> findByStatus(ServiceRequest.RequestStatus status, Pageable pageable);
 

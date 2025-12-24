@@ -1,10 +1,14 @@
 package com.servicedesk.service;
 
 import com.servicedesk.entity.Role;
+import com.servicedesk.entity.ServiceRequest;
 import com.servicedesk.entity.User;
 import com.servicedesk.repository.RoleRepository;
+import com.servicedesk.repository.ServiceRequestRepository;
 import com.servicedesk.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,9 @@ public class AdminService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ServiceRequestRepository serviceRequestRepository;
 
     /**
      * Get all users
@@ -167,5 +174,13 @@ public class AdminService {
         User user = getUserById(id);
         user.setIsActive(false);
         return userRepository.save(user);
+    }
+
+    /**
+     * Get all service requests (for admin)
+     * Returns all requests with pagination and sorting
+     */
+    public Page<ServiceRequest> getAllServiceRequests(Pageable pageable) {
+        return serviceRequestRepository.findAll(pageable);
     }
 }

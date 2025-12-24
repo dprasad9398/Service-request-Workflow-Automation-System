@@ -45,6 +45,16 @@ public class ServiceCatalog {
     @Column(name = "requires_approval", nullable = false)
     private Boolean requiresApproval = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_priority", length = 20)
+    private ServiceRequest.Priority defaultPriority = ServiceRequest.Priority.MEDIUM;
+
+    @Column(length = 100)
+    private String department;
+
+    @Column(name = "sla_hours")
+    private Integer slaHours;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

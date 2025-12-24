@@ -22,7 +22,8 @@ import {
     Work,
     People,
     Category,
-    Add
+    Add,
+    Person
 } from '@mui/icons-material';
 
 const Layout = ({ children }) => {
@@ -102,6 +103,16 @@ const Layout = ({ children }) => {
                                     }}
                                 >
                                     All Requests
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Category />}
+                                    onClick={() => navigate('/admin/service-catalog')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/service-catalog') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Service Catalog
                                 </Button>
                             </>
                         )}
@@ -188,6 +199,15 @@ const Layout = ({ children }) => {
                             <Typography variant="caption" color="text.secondary">
                                 {user?.roles?.join(', ')}
                             </Typography>
+                        </MenuItem>
+                        <MenuItem
+                            onClick={() => {
+                                handleClose();
+                                navigate('/profile');
+                            }}
+                        >
+                            <Person sx={{ mr: 1 }} />
+                            My Profile
                         </MenuItem>
                         <MenuItem onClick={handleLogout}>Logout</MenuItem>
                     </Menu>

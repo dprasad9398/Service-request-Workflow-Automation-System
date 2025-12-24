@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * Represents service categories (IT, HR, Finance, Facilities)
  */
 @Entity
-@Table(name = "service_categories")
+@Table(name = "service_category")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

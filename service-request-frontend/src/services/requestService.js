@@ -34,6 +34,14 @@ const requestService = {
     },
 
     /**
+     * Get dashboard counts for current user
+     */
+    getDashboardCounts: async () => {
+        const response = await api.get('/requests/dashboard/counts');
+        return response.data;
+    },
+
+    /**
      * Get request by ID
      */
     getRequestById: async (id) => {

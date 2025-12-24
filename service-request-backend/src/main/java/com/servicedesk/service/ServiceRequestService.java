@@ -22,6 +22,8 @@ import java.util.List;
 @Transactional
 public class ServiceRequestService {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ServiceRequestService.class);
+
     @Autowired
     private ServiceRequestRepository serviceRequestRepository;
 
@@ -29,9 +31,42 @@ public class ServiceRequestService {
      * Get my service requests
      */
     public Page<ServiceRequest> getMyServiceRequests(String username, Pageable pageable) {
+        logger.info("=== GET MY REQUESTS DEBUG ===");
+        logger.info("Requested username: '{}'", username);
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-        return serviceRequestRepository.findByRequesterId(user.getId(), pageable);
+
+        logger.info("Found user - ID: {}, Username: '{}', Email: '{}'",
+                user.getId(), user.getUsername(), user.getEmail());
+
+        Page<ServiceRequest> requests = serviceRequestRepository.findByRequesterId(user.getId(), pageable);
+
+        logger.info("Found {} total requests for user ID: {}",
+                requests.getTotalElements(), user.getId());
+        logger.info("=============================");
+
+        return requests;
+    }
+
+    /**
+     * Get dashboard counts for user
+     */
+    public com.servicedesk.dto.DashboardCountDTO getDashboardCounts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        long total = serviceRequestRepository.countByRequesterId(user.getId());
+        long pending = serviceRequestRepository.countByRequesterIdAndStatus(user.getId(),
+                ServiceRequest.RequestStatus.NEW);
+        long completed = serviceRequestRepository.countByRequesterIdAndStatus(user.getId(),
+                ServiceRequest.RequestStatus.RESOLVED)
+                + serviceRequestRepository.countByRequesterIdAndStatus(user.getId(),
+                        ServiceRequest.RequestStatus.CLOSED);
+        long cancelled = serviceRequestRepository.countByRequesterIdAndStatus(user.getId(),
+                ServiceRequest.RequestStatus.CANCELLED);
+
+        return new com.servicedesk.dto.DashboardCountDTO(total, pending, completed, cancelled);
     }
 
     @Autowired
@@ -39,6 +74,12 @@ public class ServiceRequestService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ServiceCategoryRepository serviceCategoryRepository;
+
+    @Autowired
+    private RequestTypeRepository requestTypeRepository;
 
     @Autowired
     private SLATrackingRepository slaTrackingRepository;
@@ -69,6 +110,20 @@ public class ServiceRequestService {
         request.setTitle(requestDTO.getTitle());
         request.setDescription(requestDTO.getDescription());
         request.setPriority(requestDTO.getPriority());
+
+        // Set category if provided (for category-based requests)
+        if (requestDTO.getCategoryId() != null) {
+            ServiceCategory category = serviceCategoryRepository.findById(requestDTO.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category", "id", requestDTO.getCategoryId()));
+            request.setCategory(category);
+        }
+
+        // Set request type if provided
+        if (requestDTO.getTypeId() != null) {
+            RequestType requestType = requestTypeRepository.findById(requestDTO.getTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("RequestType", "id", requestDTO.getTypeId()));
+            request.setRequestType(requestType);
+        }
 
         // Set initial status based on approval requirement
         if (service.getRequiresApproval()) {

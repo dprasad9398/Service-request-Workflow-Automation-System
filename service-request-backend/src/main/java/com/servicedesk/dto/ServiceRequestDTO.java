@@ -14,6 +14,10 @@ public class ServiceRequestDTO {
     @NotNull(message = "Service ID is required")
     private Long serviceId;
 
+    // Optional category-based fields for backward compatibility
+    private Long categoryId;
+    private Long typeId;
+
     @NotBlank(message = "Title is required")
     private String title;
 

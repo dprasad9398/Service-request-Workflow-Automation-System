@@ -1,6 +1,12 @@
 package com.servicedesk.service;
 
+import com.servicedesk.dto.ChangePasswordDTO;
+import com.servicedesk.dto.UpdateProfileDTO;
+import com.servicedesk.dto.UserProfileDTO;
+import com.servicedesk.entity.Role;
 import com.servicedesk.entity.User;
+import com.servicedesk.exception.ResourceNotFoundException;
+import com.servicedesk.repository.RoleRepository;
 import com.servicedesk.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -91,5 +97,79 @@ public class UserService {
         // Update to new password
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    /**
+     * Get user profile as DTO
+     */
+    public UserProfileDTO getUserProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        return mapToProfileDTO(user);
+    }
+
+    /**
+     * Update user profile with DTO
+     */
+    @Transactional
+    public UserProfileDTO updateUserProfile(String username, UpdateProfileDTO updateDTO) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        user.setFirstName(updateDTO.getFirstName());
+        user.setLastName(updateDTO.getLastName());
+        user.setPhone(updateDTO.getPhone());
+        user.setDepartment(updateDTO.getDepartment());
+
+        User savedUser = userRepository.save(user);
+        return mapToProfileDTO(savedUser);
+    }
+
+    /**
+     * Change user password with DTO
+     */
+    @Transactional
+    public void changeUserPassword(String username, ChangePasswordDTO changePasswordDTO) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        // Verify passwords match
+        if (!changePasswordDTO.getNewPassword().equals(changePasswordDTO.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        // Verify current password
+        if (!passwordEncoder.matches(changePasswordDTO.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Update to new password
+        user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    /**
+     * Map User entity to UserProfileDTO
+     */
+    private UserProfileDTO mapToProfileDTO(User user) {
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setPhone(user.getPhone());
+        dto.setDepartment(user.getDepartment());
+        dto.setIsActive(user.getIsActive());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setLastLogin(user.getLastLogin());
+
+        // Map roles
+        dto.setRoles(user.getRoles().stream()
+                .map(role -> role.getName().replace("ROLE_", ""))
+                .collect(java.util.stream.Collectors.toSet()));
+
+        return dto;
     }
 }

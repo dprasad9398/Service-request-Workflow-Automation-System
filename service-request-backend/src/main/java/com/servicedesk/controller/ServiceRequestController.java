@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -95,7 +96,20 @@ public class ServiceRequestController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            String username = authentication.getName();
+            // Get username from authentication or SecurityContext
+            String username;
+            if (authentication != null && authentication.getName() != null) {
+                username = authentication.getName();
+            } else {
+                // Fallback to SecurityContextHolder
+                authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || authentication.getName() == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ApiResponse(false, "User not authenticated"));
+                }
+                username = authentication.getName();
+            }
+
             logger.debug("Fetching requests for user: {}", username);
 
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -107,6 +121,36 @@ public class ServiceRequestController {
             logger.error("Error fetching user requests", e);
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "Error fetching requests: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get dashboard counts for current user
+     * GET /api/requests/dashboard/counts
+     */
+    @GetMapping("/dashboard/counts")
+    public ResponseEntity<?> getDashboardCounts(Authentication authentication) {
+        try {
+            // Get username from authentication or SecurityContext
+            String username;
+            if (authentication != null && authentication.getName() != null) {
+                username = authentication.getName();
+            } else {
+                authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || authentication.getName() == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ApiResponse(false, "User not authenticated"));
+                }
+                username = authentication.getName();
+            }
+
+            logger.debug("Fetching dashboard counts for user: {}", username);
+            com.servicedesk.dto.DashboardCountDTO counts = serviceRequestService.getDashboardCounts(username);
+            return ResponseEntity.ok(counts);
+        } catch (Exception e) {
+            logger.error("Error fetching dashboard counts", e);
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error fetching dashboard counts: " + e.getMessage()));
         }
     }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import userService from '../services/userService';
+import requestService from '../services/requestService';
 import {
     Container,
     Box,
@@ -39,10 +39,15 @@ const UserDashboard = () => {
 
     const loadStats = async () => {
         try {
-            const data = await userService.getUserStats();
-            setStats(data);
+            const counts = await requestService.getDashboardCounts();
+            setStats({
+                totalRequests: counts.total,
+                pendingRequests: counts.pending,
+                completedRequests: counts.completed,
+                cancelledRequests: counts.cancelled
+            });
         } catch (error) {
-            console.error('Failed to load user stats:', error);
+            console.error('Failed to load dashboard counts:', error);
         } finally {
             setLoading(false);
         }
@@ -113,14 +118,16 @@ const UserDashboard = () => {
         <Container maxWidth="lg">
             <Box sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h4" gutterBottom>
-                    Welcome, {stats?.fullName || user?.username}!
+                    Welcome, {user?.firstName && user?.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user?.username || 'User'}!
                 </Typography>
                 <Typography variant="body1" color="text.secondary" gutterBottom>
-                    {stats?.email || user?.email}
+                    {user?.email || ''}
                 </Typography>
-                {stats?.department && (
+                {user?.department && (
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Department: {stats.department}
+                        Department: {user.department}
                     </Typography>
                 )}
 

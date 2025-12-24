@@ -182,4 +182,41 @@ public class AdminController {
                     .body(new ApiResponse(false, "Failed to deactivate user: " + e.getMessage()));
         }
     }
+
+    /**
+     * Get all service requests (Admin)
+     * GET /api/admin/requests
+     */
+    @GetMapping("/requests")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<?> getAllRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            org.springframework.data.domain.Sort.Direction direction = sortDir.equalsIgnoreCase("asc")
+                    ? org.springframework.data.domain.Sort.Direction.ASC
+                    : org.springframework.data.domain.Sort.Direction.DESC;
+
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort.by(direction, sortBy));
+
+            org.springframework.data.domain.Page<?> requests = adminService.getAllServiceRequests(pageable);
+
+            // Return in format expected by frontend
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("requests", requests.getContent());
+            response.put("totalItems", requests.getTotalElements());
+            response.put("totalPages", requests.getTotalPages());
+            response.put("currentPage", requests.getNumber());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Failed to fetch requests: " + e.getMessage()));
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.servicedesk.service;
 
 import com.servicedesk.dto.AdminRequestDTO;
+import com.servicedesk.dto.AssignDepartmentDTO;
 import com.servicedesk.dto.AssignRequestDTO;
 import com.servicedesk.dto.UpdateStatusDTO;
 import com.servicedesk.entity.*;
@@ -86,22 +87,39 @@ public class AdminRequestService {
     /**
      * Assign request to department
      */
-    public void assignDepartment(Long requestId, AssignRequestDTO dto) {
+    public AdminRequestDTO assignDepartment(Long requestId, AssignDepartmentDTO dto) {
+        // Validate input
+        if (dto.getDepartmentId() == null) {
+            throw new IllegalArgumentException("Department ID cannot be null");
+        }
+
+        // Fetch request
         ServiceRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
 
+        // Fetch department
         Department department = departmentRepository.findById(dto.getDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Department not found with ID: " + dto.getDepartmentId()));
 
+        // Check if department is active
+        if (!department.getIsActive()) {
+            throw new IllegalArgumentException("Cannot assign to inactive department: " + department.getName());
+        }
+
+        // Assign department
         request.setDepartment(department);
         request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
-        requestRepository.save(request);
+        ServiceRequest savedRequest = requestRepository.save(request);
 
         // Log status change
-        logStatusChange(request, "Assigned to department: " + department.getName() +
-                (dto.getNotes() != null ? ". Notes: " + dto.getNotes() : ""));
+        logStatusChange(savedRequest, "Assigned to department: " + department.getName() +
+                (dto.getNotes() != null && !dto.getNotes().isEmpty() ? ". Notes: " + dto.getNotes() : ""));
 
-        System.out.println("Request " + request.getTicketId() + " assigned to department: " + department.getName());
+        System.out.println(
+                "✓ Request " + savedRequest.getTicketId() + " assigned to department: " + department.getName());
+
+        return convertToDTO(savedRequest);
     }
 
     /**

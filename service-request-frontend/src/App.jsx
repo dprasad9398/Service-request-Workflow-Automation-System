@@ -11,9 +11,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 import UserDashboard from './pages/UserDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import AdminManageRequests from './pages/admin/AdminManageRequests';
+import ServiceCatalogManagement from './pages/admin/ServiceCatalogManagement';
 import CreateRequest from './pages/user/CreateRequest';
 import MyRequests from './pages/MyRequests';
 import RequestDetails from './pages/RequestDetails';
@@ -61,6 +63,58 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/unauthorized" element={<Unauthorized />} />
 
+                        {/* Protected routes with layout - accessible to all authenticated users */}
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <Profile />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/create-request"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <CreateRequest />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/my-requests"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <MyRequests />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/user/requests"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <MyRequests />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/request/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <PageWithLayout>
+                                        <RequestDetails />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
                         {/* Admin routes - require ROLE_ADMIN */}
                         <Route
                             path="/admin/dashboard"
@@ -88,6 +142,16 @@ function App() {
                                 <AdminRoute>
                                     <PageWithLayout>
                                         <AdminManageRequests />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/service-catalog"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <ServiceCatalogManagement />
                                     </PageWithLayout>
                                 </AdminRoute>
                             }

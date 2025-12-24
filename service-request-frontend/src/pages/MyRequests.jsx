@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Container,
     Box,
@@ -42,6 +42,7 @@ const priorityColors = {
 
 const MyRequests = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
@@ -51,7 +52,7 @@ const MyRequests = () => {
 
     useEffect(() => {
         loadRequests();
-    }, [page, rowsPerPage, filterStatus]);
+    }, [page, rowsPerPage, filterStatus, location.key]); // Added location.key to force reload
 
     const loadRequests = async () => {
         setLoading(true);

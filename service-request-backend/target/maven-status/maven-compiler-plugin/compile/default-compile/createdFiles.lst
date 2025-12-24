@@ -10,6 +10,7 @@ com\servicedesk\repository\WorkflowStepRepository.class
 com\servicedesk\service\ApprovalService.class
 com\servicedesk\entity\WorkflowRule.class
 com\servicedesk\dto\ServiceRequestDTO.class
+com\servicedesk\dto\AssignDepartmentDTO.class
 com\servicedesk\entity\Workflow.class
 com\servicedesk\security\CustomUserDetailsService.class
 com\servicedesk\service\NotificationService.class
@@ -28,7 +29,6 @@ com\servicedesk\exception\ResourceNotFoundException.class
 com\servicedesk\controller\TaskController.class
 com\servicedesk\dto\JwtAuthResponse.class
 com\servicedesk\security\JwtTokenProvider.class
-com\servicedesk\controller\ServiceCatalogController.class
 com\servicedesk\entity\RequestAttachment.class
 com\servicedesk\security\JwtAuthenticationEntryPoint.class
 com\servicedesk\service\ServiceCatalogService.class

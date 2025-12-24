@@ -113,8 +113,8 @@ const CreateRequest = () => {
             console.log("Create Request Response:", response);
             setSuccess(true);
             setTimeout(() => {
-                navigate('/my-requests');
-            }, 2000);
+                navigate('/my-requests', { replace: true, state: { reload: true } });
+            }, 1500); // Reduced timeout for faster redirect
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create request');
         } finally {
