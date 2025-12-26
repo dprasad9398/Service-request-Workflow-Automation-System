@@ -17,6 +17,7 @@ public class ServiceCategoryDTO {
     private String name;
     private String description;
     private String icon;
+    private String department;
     private Boolean isActive;
     private Integer serviceCount;
     private LocalDateTime createdAt;

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Container,
     Box,
-    Typography,
     Paper,
+    Typography,
     Table,
     TableBody,
     TableCell,
@@ -11,163 +10,149 @@ import {
     TableHead,
     TableRow,
     TablePagination,
-    Button,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     Chip,
     IconButton,
+    Tooltip,
+    Snackbar,
+    Alert,
+    CircularProgress,
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
-    TextField,
-    Alert,
-    Grid
+    Button
 } from '@mui/material';
 import {
-    Assignment as AssignmentIcon,
-    Person as PersonIcon,
-    Update as UpdateIcon,
-    Timeline as TimelineIcon,
-    Refresh as RefreshIcon
+    Visibility,
+    Business,
+    Person,
+    Edit,
+    PriorityHigh,
+    TrendingUp,
+    Delete
 } from '@mui/icons-material';
 import adminRequestService from '../../services/adminRequestService';
-import departmentService from '../../services/departmentService';
+import ChangePriorityModal from '../../components/admin/ChangePriorityModal';
+import ChangeStatusModal from '../../components/admin/ChangeStatusModal';
+import EscalateRequestModal from '../../components/admin/EscalateRequestModal';
+import ViewDetailsModal from '../../components/admin/ViewDetailsModal';
 
-/**
- * Admin Manage Requests Page
- * Allows admin to view, filter, and manage all service requests
- */
 const AdminManageRequests = () => {
-    // State for requests and pagination
     const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
-    // State for filters
-    const [filters, setFilters] = useState({
-        category: 'ALL',
-        department: 'ALL',
-        priority: 'ALL',
-        status: 'ALL'
-    });
+    // Modal states
+    const [priorityModalOpen, setPriorityModalOpen] = useState(false);
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [escalateModalOpen, setEscalateModalOpen] = useState(false);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [requestDetails, setRequestDetails] = useState(null);
 
-    // State for departments and agents
-    const [departments, setDepartments] = useState([]);
-    const [agents, setAgents] = useState([]);
-
-    // State for modals
-    const [assignDeptModal, setAssignDeptModal] = useState({ open: false, requestId: null });
-    const [assignAgentModal, setAssignAgentModal] = useState({ open: false, requestId: null });
-    const [updateStatusModal, setUpdateStatusModal] = useState({ open: false, requestId: null });
-    const [timelineModal, setTimelineModal] = useState({ open: false, requestId: null, timeline: [] });
-
-    // State for form inputs
-    const [selectedDepartment, setSelectedDepartment] = useState('');
-    const [selectedAgent, setSelectedAgent] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState('');
-    const [notes, setNotes] = useState('');
+    // Snackbar state
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
         loadRequests();
-        loadDepartments();
-        loadAgents();
-    }, [page, rowsPerPage, filters]);
+    }, [page, rowsPerPage]);
 
     const loadRequests = async () => {
         setLoading(true);
-        setError('');
         try {
-            const filterParams = {};
-            if (filters.category !== 'ALL') filterParams.category = filters.category;
-            if (filters.department !== 'ALL') filterParams.department = filters.department;
-            if (filters.priority !== 'ALL') filterParams.priority = filters.priority;
-            if (filters.status !== 'ALL') filterParams.status = filters.status;
-
-            const data = await adminRequestService.getAllRequests(filterParams, page, rowsPerPage);
-            setRequests(data.requests);
-            setTotalItems(data.totalItems);
-        } catch (err) {
-            setError('Failed to load requests: ' + err.message);
+            const data = await adminRequestService.getAllRequests({}, page, rowsPerPage);
+            setRequests(data.requests || []);
+            setTotalItems(data.totalItems || 0);
+        } catch (error) {
+            showSnackbar('Failed to load requests', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const loadDepartments = async () => {
+    const showSnackbar = (message, severity = 'success') => {
+        setSnackbar({ open: true, message, severity });
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    // Action handlers
+    const handleViewDetails = async (request) => {
         try {
-            const data = await departmentService.getAllDepartments();
-            setDepartments(data);
-        } catch (err) {
-            console.error('Failed to load departments:', err);
+            const details = await adminRequestService.getRequestDetails(request.id);
+            setRequestDetails(details);
+            setDetailsModalOpen(true);
+        } catch (error) {
+            showSnackbar('Failed to load request details', 'error');
         }
     };
 
-    const loadAgents = async () => {
-        try {
-            const data = await departmentService.getAllAgents();
-            setAgents(data);
-        } catch (err) {
-            console.error('Failed to load agents:', err);
-        }
+    const handleChangePriority = (request) => {
+        setSelectedRequest(request);
+        setPriorityModalOpen(true);
     };
 
-    const handleFilterChange = (field, value) => {
-        setFilters({ ...filters, [field]: value });
-        setPage(0); // Reset to first page when filter changes
+    const handleChangeStatus = (request) => {
+        setSelectedRequest(request);
+        setStatusModalOpen(true);
     };
 
-    const handleAssignDepartment = async () => {
+    const handleEscalate = (request) => {
+        setSelectedRequest(request);
+        setEscalateModalOpen(true);
+    };
+
+    const handleDelete = (request) => {
+        setSelectedRequest(request);
+        setDeleteDialogOpen(true);
+    };
+
+    // Submit handlers
+    const handlePrioritySubmit = async (requestId, priority, notes) => {
         try {
-            await adminRequestService.assignDepartment(assignDeptModal.requestId, selectedDepartment, notes);
-            setSuccess('Department assigned successfully');
-            setAssignDeptModal({ open: false, requestId: null });
-            setSelectedDepartment('');
-            setNotes('');
+            await adminRequestService.updatePriority(requestId, priority, notes);
+            showSnackbar('Priority updated successfully');
             loadRequests();
-        } catch (err) {
-            setError('Failed to assign department: ' + err.message);
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to update priority', 'error');
         }
     };
 
-    const handleAssignAgent = async () => {
+    const handleStatusSubmit = async (requestId, status, notes) => {
         try {
-            await adminRequestService.assignAgent(assignAgentModal.requestId, selectedAgent, notes);
-            setSuccess('Agent assigned successfully');
-            setAssignAgentModal({ open: false, requestId: null });
-            setSelectedAgent('');
-            setNotes('');
+            await adminRequestService.updateStatus(requestId, status, notes);
+            showSnackbar('Status updated successfully');
             loadRequests();
-        } catch (err) {
-            setError('Failed to assign agent: ' + err.message);
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to update status', 'error');
         }
     };
 
-    const handleUpdateStatus = async () => {
+    const handleEscalateSubmit = async (requestId, escalationData) => {
         try {
-            await adminRequestService.updateStatus(updateStatusModal.requestId, selectedStatus, notes);
-            setSuccess('Status updated successfully');
-            setUpdateStatusModal({ open: false, requestId: null });
-            setSelectedStatus('');
-            setNotes('');
+            await adminRequestService.escalateRequest(requestId, escalationData);
+            showSnackbar('Request escalated successfully', 'warning');
             loadRequests();
-        } catch (err) {
-            setError('Failed to update status: ' + err.message);
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to escalate request', 'error');
         }
     };
 
-    const handleViewTimeline = async (requestId) => {
+    const handleDeleteConfirm = async () => {
         try {
-            const timeline = await adminRequestService.getTimeline(requestId);
-            setTimelineModal({ open: true, requestId, timeline });
-        } catch (err) {
-            setError('Failed to load timeline: ' + err.message);
+            await adminRequestService.deleteRequest(selectedRequest.id);
+            showSnackbar('Request deleted successfully', 'success');
+            setDeleteDialogOpen(false);
+            setSelectedRequest(null);
+            loadRequests();
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to delete request', 'error');
         }
     };
 
@@ -184,142 +169,50 @@ const AdminManageRequests = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'NEW': return 'info';
+            case 'PENDING_APPROVAL': return 'warning';
+            case 'APPROVED': return 'success';
+            case 'REJECTED': return 'error';
             case 'ASSIGNED': return 'primary';
             case 'IN_PROGRESS': return 'warning';
             case 'RESOLVED': return 'success';
             case 'CLOSED': return 'default';
+            case 'CANCELLED': return 'error';
             default: return 'default';
         }
     };
 
     return (
-        <Container maxWidth="xl">
-            <Box sx={{ mt: 4, mb: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    Manage Service Requests
-                </Typography>
+        <Box sx={{ p: 3 }}>
+            <Typography variant="h4" gutterBottom>
+                Manage Service Requests
+            </Typography>
 
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-                        {error}
-                    </Alert>
-                )}
-
-                {success && (
-                    <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
-                        {success}
-                    </Alert>
-                )}
-
-                {/* Filters */}
-                <Paper sx={{ p: 2, mb: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                        Filters
-                    </Typography>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Category</InputLabel>
-                                <Select
-                                    value={filters.category}
-                                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                                    label="Category"
-                                >
-                                    <MenuItem value="ALL">All Categories</MenuItem>
-                                    <MenuItem value="IT Support">IT Support</MenuItem>
-                                    <MenuItem value="HR Requests">HR Requests</MenuItem>
-                                    <MenuItem value="Facilities">Facilities</MenuItem>
-                                    <MenuItem value="General">General</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Department</InputLabel>
-                                <Select
-                                    value={filters.department}
-                                    onChange={(e) => handleFilterChange('department', e.target.value)}
-                                    label="Department"
-                                >
-                                    <MenuItem value="ALL">All Departments</MenuItem>
-                                    {departments.map((dept) => (
-                                        <MenuItem key={dept.id} value={dept.name}>{dept.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Priority</InputLabel>
-                                <Select
-                                    value={filters.priority}
-                                    onChange={(e) => handleFilterChange('priority', e.target.value)}
-                                    label="Priority"
-                                >
-                                    <MenuItem value="ALL">All Priorities</MenuItem>
-                                    <MenuItem value="CRITICAL">Critical</MenuItem>
-                                    <MenuItem value="HIGH">High</MenuItem>
-                                    <MenuItem value="MEDIUM">Medium</MenuItem>
-                                    <MenuItem value="LOW">Low</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    value={filters.status}
-                                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                                    label="Status"
-                                >
-                                    <MenuItem value="ALL">All Statuses</MenuItem>
-                                    <MenuItem value="NEW">New</MenuItem>
-                                    <MenuItem value="ASSIGNED">Assigned</MenuItem>
-                                    <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                                    <MenuItem value="RESOLVED">Resolved</MenuItem>
-                                    <MenuItem value="CLOSED">Closed</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
-                    <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<RefreshIcon />}
-                            onClick={loadRequests}
-                        >
-                            Refresh
-                        </Button>
-                    </Box>
-                </Paper>
-
-                {/* Requests Table */}
-                <TableContainer component={Paper}>
+            <Paper sx={{ mt: 3 }}>
+                <TableContainer>
                     <Table>
                         <TableHead>
                             <TableRow>
                                 <TableCell>Ticket ID</TableCell>
-                                <TableCell>User</TableCell>
-                                <TableCell>Category</TableCell>
                                 <TableCell>Title</TableCell>
+                                <TableCell>Requester</TableCell>
                                 <TableCell>Priority</TableCell>
                                 <TableCell>Status</TableCell>
                                 <TableCell>Department</TableCell>
                                 <TableCell>Agent</TableCell>
                                 <TableCell>Created</TableCell>
-                                <TableCell>Actions</TableCell>
+                                <TableCell align="center">Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center">
-                                        Loading...
+                                    <TableCell colSpan={9} align="center">
+                                        <CircularProgress />
                                     </TableCell>
                                 </TableRow>
                             ) : requests.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center">
+                                    <TableCell colSpan={9} align="center">
                                         No requests found
                                     </TableCell>
                                 </TableRow>
@@ -327,9 +220,8 @@ const AdminManageRequests = () => {
                                 requests.map((request) => (
                                     <TableRow key={request.id}>
                                         <TableCell>{request.ticketId}</TableCell>
-                                        <TableCell>{request.userName}</TableCell>
-                                        <TableCell>{request.categoryName}</TableCell>
                                         <TableCell>{request.title}</TableCell>
+                                        <TableCell>{request.userName}</TableCell>
                                         <TableCell>
                                             <Chip
                                                 label={request.priority}
@@ -344,203 +236,141 @@ const AdminManageRequests = () => {
                                                 size="small"
                                             />
                                         </TableCell>
-                                        <TableCell>{request.departmentName}</TableCell>
-                                        <TableCell>{request.assignedAgentName}</TableCell>
+                                        <TableCell>{request.departmentName || 'Unassigned'}</TableCell>
+                                        <TableCell>{request.assignedAgentName || 'Unassigned'}</TableCell>
                                         <TableCell>
                                             {new Date(request.createdAt).toLocaleDateString()}
                                         </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                        <TableCell align="center">
+                                            <Tooltip title="View Details">
                                                 <IconButton
                                                     size="small"
+                                                    onClick={() => handleViewDetails(request)}
                                                     color="primary"
-                                                    onClick={() => setAssignDeptModal({ open: true, requestId: request.id })}
-                                                    title="Assign Department"
                                                 >
-                                                    <AssignmentIcon fontSize="small" />
+                                                    <Visibility fontSize="small" />
                                                 </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Change Status">
                                                 <IconButton
                                                     size="small"
-                                                    color="secondary"
-                                                    onClick={() => setAssignAgentModal({ open: true, requestId: request.id })}
-                                                    title="Assign Agent"
-                                                >
-                                                    <PersonIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton
-                                                    size="small"
+                                                    onClick={() => handleChangeStatus(request)}
                                                     color="info"
-                                                    onClick={() => setUpdateStatusModal({ open: true, requestId: request.id })}
-                                                    title="Update Status"
                                                 >
-                                                    <UpdateIcon fontSize="small" />
+                                                    <Edit fontSize="small" />
                                                 </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Change Priority">
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => handleViewTimeline(request.id)}
-                                                    title="View Timeline"
+                                                    onClick={() => handleChangePriority(request)}
+                                                    color="warning"
                                                 >
-                                                    <TimelineIcon fontSize="small" />
+                                                    <PriorityHigh fontSize="small" />
                                                 </IconButton>
-                                            </Box>
+                                            </Tooltip>
+                                            <Tooltip title="Escalate">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleEscalate(request)}
+                                                    color="error"
+                                                >
+                                                    <TrendingUp fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Delete">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleDelete(request)}
+                                                    color="error"
+                                                >
+                                                    <Delete fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             )}
                         </TableBody>
                     </Table>
-                    <TablePagination
-                        component="div"
-                        count={totalItems}
-                        page={page}
-                        onPageChange={(e, newPage) => setPage(newPage)}
-                        rowsPerPage={rowsPerPage}
-                        onRowsPerPageChange={(e) => {
-                            setRowsPerPage(parseInt(e.target.value, 10));
-                            setPage(0);
-                        }}
-                    />
                 </TableContainer>
+                <TablePagination
+                    component="div"
+                    count={totalItems}
+                    page={page}
+                    onPageChange={(e, newPage) => setPage(newPage)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                    }}
+                />
+            </Paper>
 
-                {/* Assign Department Modal */}
-                <Dialog open={assignDeptModal.open} onClose={() => setAssignDeptModal({ open: false, requestId: null })}>
-                    <DialogTitle>Assign Department</DialogTitle>
-                    <DialogContent>
-                        <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel>Department</InputLabel>
-                            <Select
-                                value={selectedDepartment}
-                                onChange={(e) => setSelectedDepartment(e.target.value)}
-                                label="Department"
-                            >
-                                {departments.map((dept) => (
-                                    <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField
-                            fullWidth
-                            label="Notes"
-                            multiline
-                            rows={3}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            sx={{ mt: 2 }}
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setAssignDeptModal({ open: false, requestId: null })}>Cancel</Button>
-                        <Button onClick={handleAssignDepartment} variant="contained">Assign</Button>
-                    </DialogActions>
-                </Dialog>
+            {/* Modals */}
+            <ChangePriorityModal
+                open={priorityModalOpen}
+                onClose={() => setPriorityModalOpen(false)}
+                request={selectedRequest}
+                onSubmit={handlePrioritySubmit}
+            />
 
-                {/* Assign Agent Modal */}
-                <Dialog open={assignAgentModal.open} onClose={() => setAssignAgentModal({ open: false, requestId: null })}>
-                    <DialogTitle>Assign Agent</DialogTitle>
-                    <DialogContent>
-                        <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel>Agent</InputLabel>
-                            <Select
-                                value={selectedAgent}
-                                onChange={(e) => setSelectedAgent(e.target.value)}
-                                label="Agent"
-                            >
-                                {agents.map((agent) => (
-                                    <MenuItem key={agent.id} value={agent.id}>
-                                        {agent.username} ({agent.email})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <TextField
-                            fullWidth
-                            label="Notes"
-                            multiline
-                            rows={3}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            sx={{ mt: 2 }}
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setAssignAgentModal({ open: false, requestId: null })}>Cancel</Button>
-                        <Button onClick={handleAssignAgent} variant="contained">Assign</Button>
-                    </DialogActions>
-                </Dialog>
+            <ChangeStatusModal
+                open={statusModalOpen}
+                onClose={() => setStatusModalOpen(false)}
+                request={selectedRequest}
+                onSubmit={handleStatusSubmit}
+            />
 
-                {/* Update Status Modal */}
-                <Dialog open={updateStatusModal.open} onClose={() => setUpdateStatusModal({ open: false, requestId: null })}>
-                    <DialogTitle>Update Status</DialogTitle>
-                    <DialogContent>
-                        <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel>Status</InputLabel>
-                            <Select
-                                value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                label="Status"
-                            >
-                                <MenuItem value="NEW">New</MenuItem>
-                                <MenuItem value="ASSIGNED">Assigned</MenuItem>
-                                <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-                                <MenuItem value="RESOLVED">Resolved</MenuItem>
-                                <MenuItem value="CLOSED">Closed</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <TextField
-                            fullWidth
-                            label="Notes"
-                            multiline
-                            rows={3}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            sx={{ mt: 2 }}
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setUpdateStatusModal({ open: false, requestId: null })}>Cancel</Button>
-                        <Button onClick={handleUpdateStatus} variant="contained">Update</Button>
-                    </DialogActions>
-                </Dialog>
+            <EscalateRequestModal
+                open={escalateModalOpen}
+                onClose={() => setEscalateModalOpen(false)}
+                request={selectedRequest}
+                onSubmit={handleEscalateSubmit}
+            />
 
-                {/* Timeline Modal */}
-                <Dialog
-                    open={timelineModal.open}
-                    onClose={() => setTimelineModal({ open: false, requestId: null, timeline: [] })}
-                    maxWidth="md"
-                    fullWidth
-                >
-                    <DialogTitle>Request Timeline</DialogTitle>
-                    <DialogContent>
-                        {timelineModal.timeline.length === 0 ? (
-                            <Typography>No timeline data available</Typography>
-                        ) : (
-                            <Box>
-                                {timelineModal.timeline.map((entry, index) => (
-                                    <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-                                        <Typography variant="subtitle2">
-                                            {entry.oldStatus} → {entry.newStatus}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {new Date(entry.changedAt).toLocaleString()}
-                                        </Typography>
-                                        {entry.notes && (
-                                            <Typography variant="body2" sx={{ mt: 1 }}>
-                                                {entry.notes}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setTimelineModal({ open: false, requestId: null, timeline: [] })}>
-                            Close
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Box>
-        </Container>
+            <ViewDetailsModal
+                open={detailsModalOpen}
+                onClose={() => setDetailsModalOpen(false)}
+                requestDetails={requestDetails}
+            />
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+            >
+                <DialogTitle>Delete Request?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete request <strong>{selectedRequest?.ticketId}</strong>?
+                        <br />
+                        <br />
+                        This action cannot be undone. All related data including comments, attachments, and history will be permanently deleted.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
     );
 };
 

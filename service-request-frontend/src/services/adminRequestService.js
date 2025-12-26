@@ -59,6 +59,43 @@ const adminRequestService = {
     getTimeline: async (requestId) => {
         const response = await api.get(`/admin/requests/${requestId}/timeline`);
         return response.data;
+    },
+
+    // New methods for enhanced admin functionality
+
+    /**
+     * Update request priority
+     */
+    updatePriority: async (requestId, priority, notes = '') => {
+        const response = await api.patch(`/admin/requests/${requestId}/priority`, {
+            priority,
+            notes
+        });
+        return response.data;
+    },
+
+    /**
+     * Escalate request
+     */
+    escalateRequest: async (requestId, escalationData) => {
+        const response = await api.post(`/admin/requests/${requestId}/escalate`, escalationData);
+        return response.data;
+    },
+
+    /**
+     * Get comprehensive request details
+     */
+    getRequestDetails: async (requestId) => {
+        const response = await api.get(`/admin/requests/${requestId}/details`);
+        return response.data;
+    },
+
+    /**
+     * Delete request (Admin only)
+     */
+    deleteRequest: async (requestId) => {
+        const response = await api.delete(`/admin/requests/${requestId}`);
+        return response.data;
     }
 };
 

@@ -7,16 +7,18 @@ import lombok.Data;
 
 /**
  * Service Request Creation DTO
+ * Supports both service-based and category/request-type-based flows
  */
 @Data
 public class ServiceRequestDTO {
 
-    @NotNull(message = "Service ID is required")
-    private Long serviceId;
-
-    // Optional category-based fields for backward compatibility
+    // For category-based flow (new)
+    private Long requestTypeId;
     private Long categoryId;
-    private Long typeId;
+
+    // For service-based flow (legacy)
+    private Long serviceId;
+    private Long typeId; // Deprecated, use requestTypeId
 
     @NotBlank(message = "Title is required")
     private String title;

@@ -16,6 +16,7 @@ import UserDashboard from './pages/UserDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import AdminManageRequests from './pages/admin/AdminManageRequests';
 import ServiceCatalogManagement from './pages/admin/ServiceCatalogManagement';
+import CategoryManagement from './pages/admin/CategoryManagement';
 import CreateRequest from './pages/user/CreateRequest';
 import MyRequests from './pages/MyRequests';
 import RequestDetails from './pages/RequestDetails';
@@ -152,6 +153,16 @@ function App() {
                                 <AdminRoute>
                                     <PageWithLayout>
                                         <ServiceCatalogManagement />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/categories"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <CategoryManagement />
                                     </PageWithLayout>
                                 </AdminRoute>
                             }

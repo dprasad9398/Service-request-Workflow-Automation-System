@@ -1,55 +1,117 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
 import {
-    Computer,
-    People,
-    Business,
-    HelpOutline
-} from '@mui/icons-material';
+    Card,
+    CardActionArea,
+    CardContent,
+    Typography,
+    Chip,
+    Box
+} from '@mui/material';
+import * as Icons from '@mui/icons-material';
 
 /**
- * Category Selection Card Component
- * Displays a clickable card for each request category
+ * Professional Category Card Component
+ * Displays service category with icon, name, description, and service count
  */
-const CategoryCard = ({ category, onClick, selected }) => {
-    // Icon mapping
+const CategoryCard = ({ category, onClick, selected = false }) => {
+    // Get the icon component dynamically
     const getIcon = (iconName) => {
-        const icons = {
-            'computer': <Computer sx={{ fontSize: 48 }} />,
-            'people': <People sx={{ fontSize: 48 }} />,
-            'building': <Business sx={{ fontSize: 48 }} />,
-            'help-circle': <HelpOutline sx={{ fontSize: 48 }} />
-        };
-        return icons[iconName] || <HelpOutline sx={{ fontSize: 48 }} />;
+        if (!iconName) return <Icons.Category />;
+        const IconComponent = Icons[iconName];
+        return IconComponent ? <IconComponent /> : <Icons.Category />;
     };
 
     return (
         <Card
-            onClick={() => onClick(category)}
             sx={{
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                border: selected ? '2px solid #1976d2' : '2px solid transparent',
-                backgroundColor: selected ? '#e3f2fd' : 'white',
+                height: '100%',
+                transition: 'all 0.3s ease',
+                border: selected ? '2px solid' : '1px solid',
+                borderColor: selected ? 'primary.main' : 'divider',
                 '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: 4
+                    boxShadow: 4,
+                    borderColor: 'primary.main'
                 }
             }}
         >
-            <CardContent>
-                <Box sx={{ textAlign: 'center' }}>
-                    <Box sx={{ color: selected ? '#1976d2' : '#666', mb: 2 }}>
+            <CardActionArea
+                onClick={onClick}
+                sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    p: 2
+                }}
+            >
+                <CardContent sx={{ width: '100%', p: 0 }}>
+                    {/* Icon */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 56,
+                            height: 56,
+                            borderRadius: 2,
+                            bgcolor: selected ? 'primary.main' : 'primary.light',
+                            color: selected ? 'white' : 'primary.main',
+                            mb: 2,
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
                         {getIcon(category.icon)}
                     </Box>
-                    <Typography variant="h6" gutterBottom>
+
+                    {/* Category Name */}
+                    <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{
+                            fontWeight: 600,
+                            color: selected ? 'primary.main' : 'text.primary'
+                        }}
+                    >
                         {category.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {category.description}
+
+                    {/* Description */}
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                            mb: 2,
+                            minHeight: 40,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                        }}
+                    >
+                        {category.description || 'No description available'}
                     </Typography>
-                </Box>
-            </CardContent>
+
+                    {/* Service Count Badge */}
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Chip
+                            label={`${category.serviceCount || 0} services`}
+                            size="small"
+                            color={selected ? 'primary' : 'default'}
+                            sx={{ fontWeight: 500 }}
+                        />
+                        {category.department && (
+                            <Chip
+                                label={category.department}
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontWeight: 500 }}
+                            />
+                        )}
+                    </Box>
+                </CardContent>
+            </CardActionArea>
         </Card>
     );
 };

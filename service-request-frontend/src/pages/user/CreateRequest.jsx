@@ -13,26 +13,30 @@ import {
     MenuItem,
     Alert,
     Paper,
-    Card,
-    CardContent,
-    CardActionArea,
-    Chip,
-    CircularProgress
+    CircularProgress,
+    Skeleton,
+    Chip
 } from '@mui/material';
-import serviceCatalogService from '../../services/serviceCatalogService';
+import CategoryCard from '../../components/request/CategoryCard';
+import categoryService from '../../services/categoryService';
 import requestService from '../../services/requestService';
 
 /**
  * Create Request Page
- * Allows users to create service requests by selecting from catalog
+ * Step 1: Select Category
+ * Step 2: Select Request Type
+ * Step 3: Fill Request Form
+ * Step 4: Submit Request
  */
 const CreateRequest = () => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
-    const [services, setServices] = useState([]);
+    const [requestTypes, setRequestTypes] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedService, setSelectedService] = useState(null);
+    const [selectedRequestType, setSelectedRequestType] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [loadingRequestTypes, setLoadingRequestTypes] = useState(false);
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -46,36 +50,66 @@ const CreateRequest = () => {
     }, []);
 
     const loadCategories = async () => {
+        console.log('🔄 Loading categories...');
         try {
-            const data = await serviceCatalogService.getActiveCategories();
-            setCategories(data);
+            setLoadingCategories(true);
+            setError('');
+            const data = await categoryService.getCategories();
+
+            if (!data || data.length === 0) {
+                console.warn('⚠️ No categories returned from API');
+                setError('No service categories available. Please contact your administrator.');
+            } else {
+                console.log(`✅ Loaded ${data.length} categories`);
+                setCategories(data);
+            }
         } catch (err) {
-            setError('Failed to load categories');
-            console.error(err);
+            console.error('❌ Error loading categories:', err);
+            console.error('Error response:', err.response);
+            setError('Failed to load categories. Please try again or contact support.');
+        } finally {
+            setLoadingCategories(false);
         }
     };
 
     const handleCategorySelect = async (category) => {
+        console.log('🔄 Category selected:', category.name, '(ID:', category.id, ')');
         setSelectedCategory(category);
-        setSelectedService(null);
+        setSelectedRequestType(null);
+        setRequestTypes([]);
         setError('');
+        setLoadingRequestTypes(true);
 
         try {
-            const servicesData = await serviceCatalogService.getServicesByCategory(category.id);
-            setServices(servicesData);
+            console.log(`📡 Loading request types for category ${category.id}...`);
+            const typesData = await categoryService.getCategoryTypes(category.id);
+
+            if (!typesData || typesData.length === 0) {
+                console.warn(`⚠️ No request types found for category: ${category.name}`);
+                setError(`No request types available for ${category.name}. Please select another category or contact support.`);
+            } else {
+                console.log(`✅ Loaded ${typesData.length} request types for ${category.name}`);
+                setRequestTypes(typesData);
+            }
         } catch (err) {
-            setError('Failed to load services');
-            console.error(err);
+            console.error(`❌ Error loading request types for category ${category.id}:`, err);
+            console.error('Error response:', err.response);
+            setError(`Failed to load request types for ${category.name}. Please try again.`);
+        } finally {
+            setLoadingRequestTypes(false);
         }
     };
 
-    const handleServiceSelect = (service) => {
-        setSelectedService(service);
-        // Auto-fill priority and department from service
-        setFormData({
-            ...formData,
-            priority: service.defaultPriority || 'MEDIUM'
-        });
+    const handleRequestTypeSelect = (requestType) => {
+        console.log('🔄 Request type selected:', requestType.name, '(ID:', requestType.id, ')');
+        setSelectedRequestType(requestType);
+        // Auto-fill priority if available
+        if (requestType.defaultPriority) {
+            setFormData({
+                ...formData,
+                priority: requestType.defaultPriority
+            });
+        }
     };
 
     const handleChange = (e) => {
@@ -88,8 +122,18 @@ const CreateRequest = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!selectedService) {
-            setError('Please select a service');
+        if (!selectedRequestType) {
+            setError('Please select a request type');
+            return;
+        }
+
+        if (!formData.title.trim()) {
+            setError('Please enter a title for your request');
+            return;
+        }
+
+        if (!formData.description.trim()) {
+            setError('Please enter a description for your request');
             return;
         }
 
@@ -98,27 +142,32 @@ const CreateRequest = () => {
 
         try {
             const requestData = {
-                serviceId: selectedService.id,
+                requestTypeId: selectedRequestType.id,
                 categoryId: selectedCategory.id,
                 title: formData.title,
                 description: formData.description,
                 priority: formData.priority
             };
 
-            await requestService.createRequest(requestData);
+            console.log('📤 Submitting request:', requestData);
+            const response = await requestService.createRequest(requestData);
+            console.log('✅ Request created successfully:', response);
+
             navigate('/my-requests', { replace: true, state: { reload: true } });
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to create request');
+            console.error('❌ Error creating request:', err);
+            console.error('Error response:', err.response);
+            setError(err.response?.data?.message || 'Failed to create request. Please try again.');
             setLoading(false);
         }
     };
 
     const handleBack = () => {
-        if (selectedService) {
-            setSelectedService(null);
+        if (selectedRequestType) {
+            setSelectedRequestType(null);
         } else if (selectedCategory) {
             setSelectedCategory(null);
-            setServices([]);
+            setRequestTypes([]);
         }
     };
 
@@ -141,103 +190,119 @@ const CreateRequest = () => {
                         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                             Step 1: Select Category
                         </Typography>
-                        <Grid container spacing={2}>
-                            {categories.map((category) => (
-                                <Grid item xs={12} sm={6} md={4} key={category.id}>
-                                    <Card>
-                                        <CardActionArea onClick={() => handleCategorySelect(category)}>
-                                            <CardContent>
-                                                <Typography variant="h6" gutterBottom>
-                                                    {category.name}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {category.description}
-                                                </Typography>
-                                                <Chip
-                                                    label={`${category.serviceCount || 0} services`}
-                                                    size="small"
-                                                    sx={{ mt: 1 }}
-                                                />
-                                            </CardContent>
-                                        </CardActionArea>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
+                        <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+                            Choose a category that best describes your request
+                        </Typography>
+
+                        {loadingCategories ? (
+                            <Grid container spacing={3}>
+                                {[1, 2, 3, 4, 5, 6].map((item) => (
+                                    <Grid item xs={12} sm={6} md={4} key={item}>
+                                        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        ) : categories.length === 0 ? (
+                            <Alert severity="info">
+                                No categories available at the moment. Please contact support.
+                            </Alert>
+                        ) : (
+                            <Grid container spacing={3}>
+                                {categories.map((category) => (
+                                    <Grid item xs={12} sm={6} md={4} key={category.id}>
+                                        <CategoryCard
+                                            category={category}
+                                            onClick={() => handleCategorySelect(category)}
+                                            selected={false}
+                                        />
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
                     </Box>
                 )}
 
-                {/* Step 2: Select Service */}
-                {selectedCategory && !selectedService && (
+                {/* Step 2: Select Request Type */}
+                {selectedCategory && !selectedRequestType && (
                     <Box>
                         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                            Step 2: Select Service
+                            Step 2: Select Request Type
                         </Typography>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Category: {selectedCategory.name}
+                            Category: <strong>{selectedCategory.name}</strong>
                         </Typography>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            {services.map((service) => (
-                                <Grid item xs={12} key={service.id}>
-                                    <Card>
-                                        <CardActionArea onClick={() => handleServiceSelect(service)}>
-                                            <CardContent>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                                    <Box>
-                                                        <Typography variant="h6">
-                                                            {service.name}
-                                                        </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {service.description}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                                        {service.defaultPriority && (
-                                                            <Chip
-                                                                label={service.defaultPriority}
-                                                                size="small"
-                                                                color={
-                                                                    service.defaultPriority === 'HIGH' ? 'error' :
-                                                                        service.defaultPriority === 'MEDIUM' ? 'warning' : 'default'
-                                                                }
-                                                            />
-                                                        )}
-                                                        {service.department && (
-                                                            <Chip
-                                                                label={service.department}
-                                                                size="small"
-                                                                variant="outlined"
-                                                            />
-                                                        )}
-                                                        {service.slaHours && (
-                                                            <Chip
-                                                                label={`SLA: ${service.slaHours}h`}
-                                                                size="small"
-                                                                variant="outlined"
-                                                            />
-                                                        )}
-                                                    </Box>
+
+                        {loadingRequestTypes ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                                <CircularProgress />
+                                <Typography variant="body2" sx={{ ml: 2, mt: 1 }}>
+                                    Loading request types...
+                                </Typography>
+                            </Box>
+                        ) : requestTypes.length === 0 ? (
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                                No request types available for this category at the moment.
+                            </Alert>
+                        ) : (
+                            <Grid container spacing={2} sx={{ mt: 1 }}>
+                                {requestTypes.map((requestType) => (
+                                    <Grid item xs={12} key={requestType.id}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                '&:hover': {
+                                                    elevation: 3,
+                                                    transform: 'translateY(-2px)',
+                                                    borderColor: 'primary.main',
+                                                    boxShadow: 3
+                                                }
+                                            }}
+                                            onClick={() => handleRequestTypeSelect(requestType)}
+                                        >
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                <Box sx={{ flex: 1 }}>
+                                                    <Typography variant="h6">
+                                                        {requestType.name}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {requestType.description || 'No description available'}
+                                                    </Typography>
                                                 </Box>
-                                            </CardContent>
-                                        </CardActionArea>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
-                        <Button onClick={handleBack} sx={{ mt: 2 }}>
+                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', ml: 2 }}>
+                                                    {requestType.isActive && (
+                                                        <Chip
+                                                            label="Active"
+                                                            size="small"
+                                                            color="success"
+                                                            variant="outlined"
+                                                        />
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
+                        <Button onClick={handleBack} sx={{ mt: 2 }} variant="outlined">
                             Back to Categories
                         </Button>
                     </Box>
                 )}
 
                 {/* Step 3: Request Details */}
-                {selectedService && (
+                {selectedRequestType && (
                     <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
                         <Typography variant="h6" gutterBottom>
                             Step 3: Request Details
                         </Typography>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Service: {selectedService.name}
+                            Category: <strong>{selectedCategory.name}</strong> → Request Type: <strong>{selectedRequestType.name}</strong>
                         </Typography>
 
                         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
@@ -245,33 +310,35 @@ const CreateRequest = () => {
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
-                                        label="Title"
+                                        label="Title *"
                                         name="title"
                                         value={formData.title}
                                         onChange={handleChange}
                                         required
+                                        placeholder="Brief summary of your request"
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
-                                        label="Description"
+                                        label="Description *"
                                         name="description"
                                         value={formData.description}
                                         onChange={handleChange}
                                         multiline
                                         rows={4}
                                         required
+                                        placeholder="Detailed description of your request"
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth>
-                                        <InputLabel>Priority</InputLabel>
+                                        <InputLabel>Priority *</InputLabel>
                                         <Select
                                             name="priority"
                                             value={formData.priority}
                                             onChange={handleChange}
-                                            label="Priority"
+                                            label="Priority *"
                                         >
                                             <MenuItem value="LOW">Low</MenuItem>
                                             <MenuItem value="MEDIUM">Medium</MenuItem>
@@ -280,26 +347,25 @@ const CreateRequest = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                {selectedService.department && (
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            fullWidth
-                                            label="Department"
-                                            value={selectedService.department}
-                                            disabled
-                                        />
-                                    </Grid>
-                                )}
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Category"
+                                        value={selectedCategory.name}
+                                        disabled
+                                    />
+                                </Grid>
                             </Grid>
 
                             <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                                <Button onClick={handleBack}>
+                                <Button onClick={handleBack} variant="outlined" disabled={loading}>
                                     Back
                                 </Button>
                                 <Button
                                     type="submit"
                                     variant="contained"
                                     disabled={loading}
+                                    sx={{ flex: 1 }}
                                 >
                                     {loading ? <CircularProgress size={24} /> : 'Submit Request'}
                                 </Button>

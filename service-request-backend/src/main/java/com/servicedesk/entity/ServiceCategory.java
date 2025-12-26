@@ -34,6 +34,9 @@ public class ServiceCategory {
     @Column(length = 50)
     private String icon;
 
+    @Column(length = 100)
+    private String department;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 

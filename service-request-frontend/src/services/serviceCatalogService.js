@@ -70,6 +70,55 @@ const serviceCatalogService = {
         return response.data;
     },
 
+    // Admin Category Management APIs
+    /**
+     * Get all categories (admin - including inactive)
+     */
+    getAdminCategories: async () => {
+        const response = await api.get('/admin/categories');
+        return response.data;
+    },
+
+    /**
+     * Get category by ID (admin)
+     */
+    getCategoryById: async (id) => {
+        const response = await api.get(`/admin/categories/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Create category (admin)
+     */
+    createCategoryAdmin: async (categoryData) => {
+        const response = await api.post('/admin/categories', categoryData);
+        return response.data;
+    },
+
+    /**
+     * Update category (admin)
+     */
+    updateCategoryAdmin: async (id, categoryData) => {
+        const response = await api.put(`/admin/categories/${id}`, categoryData);
+        return response.data;
+    },
+
+    /**
+     * Toggle category status (admin)
+     */
+    toggleCategoryStatus: async (id) => {
+        const response = await api.patch(`/admin/categories/${id}/status`);
+        return response.data;
+    },
+
+    /**
+     * Delete category (admin - soft delete)
+     */
+    deleteCategory: async (id) => {
+        const response = await api.delete(`/admin/categories/${id}`);
+        return response.data;
+    },
+
     // User APIs
     /**
      * Get active categories (user)

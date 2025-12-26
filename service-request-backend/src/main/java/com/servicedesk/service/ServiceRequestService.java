@@ -92,56 +92,80 @@ public class ServiceRequestService {
 
     /**
      * Create new service request
+     * Supports both service-based and category/request-type-based flows
      */
     public ServiceRequest createServiceRequest(ServiceRequestDTO requestDTO, String username) {
+        logger.info("=== CREATING SERVICE REQUEST ===");
+        logger.info("Username: {}", username);
+        logger.info("Request DTO: requestTypeId={}, categoryId={}, serviceId={}, title={}, priority={}",
+                requestDTO.getRequestTypeId(), requestDTO.getCategoryId(),
+                requestDTO.getServiceId(), requestDTO.getTitle(), requestDTO.getPriority());
+
         // Get requester
         User requester = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
-        // Get service
-        ServiceCatalog service = serviceCatalogRepository.findById(requestDTO.getServiceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Service", "id", requestDTO.getServiceId()));
-
         // Create service request
         ServiceRequest request = new ServiceRequest();
         request.setTicketId(TicketIdGenerator.generateTicketId());
-        request.setService(service);
         request.setRequester(requester);
         request.setTitle(requestDTO.getTitle());
         request.setDescription(requestDTO.getDescription());
         request.setPriority(requestDTO.getPriority());
 
-        // Set category if provided (for category-based requests)
+        // Handle category-based flow (new)
         if (requestDTO.getCategoryId() != null) {
+            logger.info("Category-based request flow");
             ServiceCategory category = serviceCategoryRepository.findById(requestDTO.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "id", requestDTO.getCategoryId()));
             request.setCategory(category);
+            logger.info("Category set: {}", category.getName());
         }
 
-        // Set request type if provided
-        if (requestDTO.getTypeId() != null) {
-            RequestType requestType = requestTypeRepository.findById(requestDTO.getTypeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("RequestType", "id", requestDTO.getTypeId()));
+        // Handle request type (support both requestTypeId and legacy typeId)
+        Long typeId = requestDTO.getRequestTypeId() != null ? requestDTO.getRequestTypeId() : requestDTO.getTypeId();
+        if (typeId != null) {
+            logger.info("Setting request type: {}", typeId);
+            RequestType requestType = requestTypeRepository.findById(typeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("RequestType", "id", typeId));
             request.setRequestType(requestType);
+            logger.info("Request type set: {}", requestType.getName());
         }
 
-        // Set initial status based on approval requirement
-        if (service.getRequiresApproval()) {
+        // Handle service (optional for category-based flow)
+        ServiceCatalog service = null;
+        if (requestDTO.getServiceId() != null) {
+            logger.info("Service-based request flow");
+            service = serviceCatalogRepository.findById(requestDTO.getServiceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Service", "id", requestDTO.getServiceId()));
+            request.setService(service);
+            logger.info("Service set: {}", service.getName());
+        } else {
+            logger.info("No service specified - category/request-type-based request");
+        }
+
+        // Set initial status
+        if (service != null && service.getRequiresApproval()) {
             request.setStatus(ServiceRequest.RequestStatus.PENDING_APPROVAL);
+            logger.info("Status set to PENDING_APPROVAL (service requires approval)");
         } else {
             request.setStatus(ServiceRequest.RequestStatus.NEW);
+            logger.info("Status set to NEW");
         }
 
         ServiceRequest savedRequest = serviceRequestRepository.save(request);
+        logger.info("Request saved with ID: {} and Ticket ID: {}", savedRequest.getId(), savedRequest.getTicketId());
 
-        // Create SLA tracking if SLA is defined
-        if (service.getSla() != null) {
+        // Create SLA tracking if service has SLA defined
+        if (service != null && service.getSla() != null) {
             createSLATracking(savedRequest, service.getSla());
+            logger.info("SLA tracking created");
         }
 
         // Trigger workflow if exists
         triggerWorkflow(savedRequest);
 
+        logger.info("=== SERVICE REQUEST CREATED SUCCESSFULLY ===");
         return savedRequest;
     }
 
@@ -263,6 +287,12 @@ public class ServiceRequestService {
      * Trigger workflow for request
      */
     private void triggerWorkflow(ServiceRequest request) {
+        // Only trigger workflow if service is specified
+        if (request.getService() == null) {
+            logger.info("No service specified - skipping workflow trigger");
+            return;
+        }
+
         workflowRepository.findByServiceIdAndIsActive(request.getService().getId(), true)
                 .ifPresent(workflow -> {
                     WorkflowInstance instance = new WorkflowInstance();

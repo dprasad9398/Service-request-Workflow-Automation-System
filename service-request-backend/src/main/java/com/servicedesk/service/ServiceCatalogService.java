@@ -174,6 +174,7 @@ public class ServiceCatalogService {
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
         category.setIcon(dto.getIcon());
+        category.setDepartment(dto.getDepartment());
         category.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
 
         ServiceCategory saved = serviceCategoryRepository.save(category);
@@ -191,6 +192,7 @@ public class ServiceCatalogService {
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
         category.setIcon(dto.getIcon());
+        category.setDepartment(dto.getDepartment());
         category.setIsActive(dto.getIsActive());
 
         ServiceCategory updated = serviceCategoryRepository.save(category);
@@ -206,6 +208,7 @@ public class ServiceCatalogService {
         dto.setName(category.getName());
         dto.setDescription(category.getDescription());
         dto.setIcon(category.getIcon());
+        dto.setDepartment(category.getDepartment());
         dto.setIsActive(category.getIsActive());
         dto.setCreatedAt(category.getCreatedAt());
         dto.setUpdatedAt(category.getUpdatedAt());
@@ -246,5 +249,54 @@ public class ServiceCatalogService {
         }
 
         return dto;
+    }
+
+    /**
+     * Get category by ID (for admin)
+     */
+    public ServiceCategoryDTO getCategoryById(Long id) {
+        ServiceCategory category = serviceCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+        return mapCategoryToDTO(category);
+    }
+
+    /**
+     * Check if category name exists
+     */
+    public boolean categoryNameExists(String name) {
+        return serviceCategoryRepository.existsByName(name);
+    }
+
+    /**
+     * Check if category name exists excluding a specific ID
+     */
+    public boolean categoryNameExistsExcludingId(String name, Long excludeId) {
+        return serviceCategoryRepository.findByName(name)
+                .map(category -> !category.getId().equals(excludeId))
+                .orElse(false);
+    }
+
+    /**
+     * Toggle category active status
+     */
+    @Transactional
+    public ServiceCategoryDTO toggleCategoryStatus(Long id) {
+        ServiceCategory category = serviceCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+
+        category.setIsActive(!category.getIsActive());
+        ServiceCategory updated = serviceCategoryRepository.save(category);
+        return mapCategoryToDTO(updated);
+    }
+
+    /**
+     * Delete (soft delete) category
+     */
+    @Transactional
+    public void deleteCategory(Long id) {
+        ServiceCategory category = serviceCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+        category.setIsActive(false);
+        serviceCategoryRepository.save(category);
     }
 }

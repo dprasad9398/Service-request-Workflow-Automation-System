@@ -1,9 +1,6 @@
 package com.servicedesk.controller;
 
-import com.servicedesk.dto.AdminRequestDTO;
-import com.servicedesk.dto.AssignDepartmentDTO;
-import com.servicedesk.dto.AssignRequestDTO;
-import com.servicedesk.dto.UpdateStatusDTO;
+import com.servicedesk.dto.*;
 import com.servicedesk.entity.RequestStatusHistory;
 import com.servicedesk.service.AdminRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,5 +141,110 @@ public class AdminRequestController {
 
         List<RequestStatusHistory> timeline = adminRequestService.getRequestTimeline(id);
         return ResponseEntity.ok(timeline);
+    }
+
+    /**
+     * Update request priority
+     * PATCH /api/admin/requests/{id}/priority
+     */
+    @PatchMapping("/{id}/priority")
+    public ResponseEntity<?> updatePriority(
+            @PathVariable Long id,
+            @RequestBody @jakarta.validation.Valid UpdatePriorityDTO dto) {
+        System.out.println("=== ADMIN: Updating priority for request " + id + " ===");
+        System.out.println("New Priority: " + dto.getPriority());
+
+        try {
+            AdminRequestDTO updatedRequest = adminRequestService.updatePriority(id, dto);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Priority updated successfully",
+                    "request", updatedRequest));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error updating priority: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Escalate request
+     * POST /api/admin/requests/{id}/escalate
+     */
+    @PostMapping("/{id}/escalate")
+    public ResponseEntity<?> escalateRequest(
+            @PathVariable Long id,
+            @RequestBody @jakarta.validation.Valid EscalateRequestDTO dto) {
+        System.out.println("=== ADMIN: Escalating request " + id + " ===");
+        System.out.println("Reason: " + dto.getReason());
+
+        try {
+            AdminRequestDTO updatedRequest = adminRequestService.escalateRequest(id, dto);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Request escalated successfully",
+                    "request", updatedRequest));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error escalating request: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get comprehensive request details
+     * GET /api/admin/requests/{id}/details
+     */
+    @GetMapping("/{id}/details")
+    public ResponseEntity<?> getRequestDetails(@PathVariable Long id) {
+        System.out.println("=== ADMIN: Fetching details for request " + id + " ===");
+
+        try {
+            RequestDetailsDTO details = adminRequestService.getRequestDetails(id);
+            return ResponseEntity.ok(details);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error fetching request details: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete request (Admin only)
+     * DELETE /api/admin/requests/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRequest(@PathVariable Long id) {
+        System.out.println("=== ADMIN: Deleting request " + id + " ===");
+
+        try {
+            adminRequestService.deleteRequest(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Request deleted successfully"));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Validation error: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error deleting request: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
+        }
     }
 }

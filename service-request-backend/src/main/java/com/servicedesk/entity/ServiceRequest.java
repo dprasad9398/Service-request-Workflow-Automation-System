@@ -32,7 +32,7 @@ public class ServiceRequest {
     private String ticketId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_id", nullable = false)
+    @JoinColumn(name = "service_id") // Made nullable to support category-based requests
     private ServiceCatalog service;
 
     @ManyToOne(fetch = FetchType.LAZY)

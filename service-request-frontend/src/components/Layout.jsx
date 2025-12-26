@@ -22,6 +22,7 @@ import {
     Work,
     People,
     Category,
+    Folder,
     Add,
     Person
 } from '@mui/icons-material';
@@ -96,6 +97,16 @@ const Layout = ({ children }) => {
                                 </Button>
                                 <Button
                                     color="inherit"
+                                    startIcon={<Folder />}
+                                    onClick={() => navigate('/admin/categories')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/categories') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Categories
+                                </Button>
+                                <Button
+                                    color="inherit"
                                     startIcon={<Assignment />}
                                     onClick={() => navigate('/admin/requests')}
                                     sx={{
@@ -103,16 +114,6 @@ const Layout = ({ children }) => {
                                     }}
                                 >
                                     All Requests
-                                </Button>
-                                <Button
-                                    color="inherit"
-                                    startIcon={<Category />}
-                                    onClick={() => navigate('/admin/service-catalog')}
-                                    sx={{
-                                        backgroundColor: isActive('/admin/service-catalog') ? 'rgba(255,255,255,0.1)' : 'transparent'
-                                    }}
-                                >
-                                    Service Catalog
                                 </Button>
                             </>
                         )}

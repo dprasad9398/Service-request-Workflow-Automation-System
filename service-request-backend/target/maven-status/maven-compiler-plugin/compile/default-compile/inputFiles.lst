@@ -4,6 +4,8 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repo
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\CategoryController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\CreateCategorizedRequestDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\exception\ResourceNotFoundException.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\ReportsController.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\ServiceCategoryController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\DashboardCountDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\RequestStatusHistoryRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\config\SecurityConfig.java
@@ -12,9 +14,11 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repo
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\AdminRequestService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\JwtAuthResponse.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\Department.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\AssignAgentDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\ServiceRequestRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\ServiceCategory.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\ServiceRequestService.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ActivityLogDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\UserRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\ServiceCategoryRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\ServiceCatalogRepository.java
@@ -25,6 +29,7 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\cont
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RegisterRequest.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\WorkflowRuleRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\security\JwtAuthenticationFilter.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\ReportsService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\RequestCommentRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\ServiceCatalogService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\WorkflowInstance.java
@@ -39,10 +44,12 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repo
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\ServiceDeskApplication.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\RequestType.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\Task.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\ActivityLogRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\ApprovalService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\AdminRequestController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\DepartmentService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\AssignRequestDTO.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\AdminCategoryController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\Approval.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\util\PasswordHashGenerator.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\UpdateStatusDTO.java
@@ -58,6 +65,7 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\enti
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\DebugController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\LoginRequest.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\UpdateProfileDTO.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\ActivityLog.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\SLAMonitoringService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\SLATracking.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\AuditLog.java
@@ -77,12 +85,15 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repo
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\TaskRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\security\JwtTokenProvider.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\CategoryDepartmentMapping.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RequestDetailsDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\WorkflowStepRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RequestFilterDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\WorkflowRule.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ApiResponse.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\AdminService.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\UpdatePriorityDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\AuditLogRepository.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\EscalateRequestDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\SLARepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\AuthController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\Workflow.java
