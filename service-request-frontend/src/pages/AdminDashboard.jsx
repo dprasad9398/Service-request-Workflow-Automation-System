@@ -31,6 +31,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [stats, setStats] = useState(null);
+    const [requestStats, setRequestStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -39,8 +40,17 @@ const AdminDashboard = () => {
 
     const loadStats = async () => {
         try {
-            const data = await adminService.getAdminStats();
-            setStats(data);
+            const [adminData, reportsData] = await Promise.all([
+                adminService.getAdminStats(),
+                // Import reportsService at the top
+                fetch('/api/admin/reports/statistics', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }).then(res => res.json())
+            ]);
+            setStats(adminData);
+            setRequestStats(reportsData);
         } catch (error) {
             console.error('Failed to load admin stats:', error);
         } finally {
@@ -69,7 +79,7 @@ const AdminDashboard = () => {
         },
         {
             title: 'Total Requests',
-            value: '0',
+            value: requestStats?.totalRequests || 0,
             icon: <Assignment />,
             color: '#9c27b0'
         },
@@ -154,6 +164,60 @@ const AdminDashboard = () => {
                         </Grid>
                     ))}
                 </Grid>
+
+                {/* Additional Request Statistics */}
+                {requestStats && (
+                    <Grid container spacing={3} sx={{ mt: 2 }}>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                                        Pending
+                                    </Typography>
+                                    <Typography variant="h3" color="warning.main">
+                                        {requestStats.pendingRequests || 0}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                                        In Progress
+                                    </Typography>
+                                    <Typography variant="h3" color="info.main">
+                                        {requestStats.inProgressRequests || 0}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                                        Resolved
+                                    </Typography>
+                                    <Typography variant="h3" color="success.main">
+                                        {requestStats.resolvedRequests || 0}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                                        Cancelled
+                                    </Typography>
+                                    <Typography variant="h3" color="error.main">
+                                        {requestStats.cancelledRequests || 0}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
+                )}
 
                 <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
                     Quick Actions

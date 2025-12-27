@@ -24,7 +24,11 @@ import {
     Category,
     Folder,
     Add,
-    Person
+    Person,
+    BarChart,
+    Business,
+    Settings,
+    History
 } from '@mui/icons-material';
 
 const Layout = ({ children }) => {
@@ -114,6 +118,46 @@ const Layout = ({ children }) => {
                                     }}
                                 >
                                     All Requests
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<BarChart />}
+                                    onClick={() => navigate('/admin/reports')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/reports') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Reports
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Business />}
+                                    onClick={() => navigate('/admin/departments')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/departments') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Departments
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<Settings />}
+                                    onClick={() => navigate('/admin/settings')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/settings') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Settings
+                                </Button>
+                                <Button
+                                    color="inherit"
+                                    startIcon={<History />}
+                                    onClick={() => navigate('/admin/audit-logs')}
+                                    sx={{
+                                        backgroundColor: isActive('/admin/audit-logs') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                    }}
+                                >
+                                    Audit Logs
                                 </Button>
                             </>
                         )}

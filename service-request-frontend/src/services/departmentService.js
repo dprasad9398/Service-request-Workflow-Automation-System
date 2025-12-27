@@ -27,6 +27,38 @@ const departmentService = {
     getAllAgents: async () => {
         const response = await api.get('/admin/departments/agents');
         return response.data;
+    },
+
+    /**
+     * Create new department
+     */
+    createDepartment: async (departmentData) => {
+        const response = await api.post('/departments', departmentData);
+        return response.data;
+    },
+
+    /**
+     * Update department
+     */
+    updateDepartment: async (id, departmentData) => {
+        const response = await api.put(`/departments/${id}`, departmentData);
+        return response.data;
+    },
+
+    /**
+     * Delete department
+     */
+    deleteDepartment: async (id) => {
+        const response = await api.delete(`/departments/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Toggle department active status
+     */
+    toggleDepartmentStatus: async (id) => {
+        const response = await api.patch(`/departments/${id}/toggle-status`);
+        return response.data;
     }
 };
 

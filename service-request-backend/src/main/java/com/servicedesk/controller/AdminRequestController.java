@@ -247,4 +247,42 @@ public class AdminRequestController {
                     .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
         }
     }
+
+    /**
+     * Bulk assign requests to department or agent
+     * POST /api/admin/requests/bulk-assign
+     */
+    @PostMapping("/bulk-assign")
+    public ResponseEntity<?> bulkAssignRequests(@RequestBody BulkAssignmentDTO bulkAssignment) {
+        System.out.println("=== ADMIN: Bulk assigning " + bulkAssignment.getRequestIds().size() + " requests ===");
+        try {
+            int assignedCount = adminRequestService.bulkAssignRequests(bulkAssignment);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", assignedCount + " requests assigned successfully",
+                    "assignedCount", assignedCount));
+        } catch (Exception e) {
+            System.err.println("Error in bulk assignment: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Failed to assign requests: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get agent workload statistics
+     * GET /api/admin/requests/agent-workload
+     */
+    @GetMapping("/agent-workload")
+    public ResponseEntity<?> getAgentWorkload() {
+        System.out.println("=== ADMIN: Fetching agent workload ===");
+        try {
+            Map<String, Object> workload = adminRequestService.getAgentWorkload();
+            return ResponseEntity.ok(workload);
+        } catch (Exception e) {
+            System.err.println("Error fetching agent workload: " + e.getMessage());
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "Failed to fetch agent workload"));
+        }
+    }
 }

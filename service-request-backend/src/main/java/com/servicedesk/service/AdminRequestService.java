@@ -1,6 +1,15 @@
 package com.servicedesk.service;
 
-import com.servicedesk.dto.*;
+import com.servicedesk.dto.AdminRequestDTO;
+import com.servicedesk.dto.AdminRequestDetailDTO;
+import com.servicedesk.dto.ActivityLogDTO;
+import com.servicedesk.dto.AssignDepartmentDTO;
+import com.servicedesk.dto.AssignRequestDTO;
+import com.servicedesk.dto.UpdateStatusDTO;
+import com.servicedesk.dto.UpdatePriorityDTO;
+import com.servicedesk.dto.EscalateRequestDTO;
+import com.servicedesk.dto.RequestDetailsDTO;
+import com.servicedesk.dto.BulkAssignmentDTO;
 import com.servicedesk.entity.*;
 import com.servicedesk.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -407,5 +415,71 @@ public class AdminRequestService {
         requestRepository.delete(request);
 
         System.out.println("✓ Request " + ticketId + " deleted successfully");
+    }
+
+    /**
+     * Bulk assign requests to department or agent
+     */
+    public int bulkAssignRequests(BulkAssignmentDTO bulkAssignment) {
+        int assignedCount = 0;
+
+        for (Long requestId : bulkAssignment.getRequestIds()) {
+            try {
+                ServiceRequest request = requestRepository.findById(requestId)
+                        .orElseThrow(() -> new IllegalArgumentException("Request not found: " + requestId));
+
+                // Assign department if provided
+                if (bulkAssignment.getDepartmentId() != null) {
+                    Department department = departmentRepository.findById(bulkAssignment.getDepartmentId())
+                            .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+                    request.setDepartment(department);
+                    logActivity(request, "DEPARTMENT_ASSIGNED", null, department.getName(),
+                            bulkAssignment.getNotes());
+                }
+
+                // Assign agent if provided
+                if (bulkAssignment.getAgentId() != null) {
+                    User agent = userRepository.findById(bulkAssignment.getAgentId())
+                            .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
+                    request.setAssignedAgent(agent);
+                    request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
+                    logActivity(request, "AGENT_ASSIGNED", null, agent.getUsername(),
+                            bulkAssignment.getNotes());
+                }
+
+                requestRepository.save(request);
+                assignedCount++;
+
+            } catch (Exception e) {
+                System.err.println("Failed to assign request " + requestId + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("✓ Bulk assigned " + assignedCount + " out of " +
+                bulkAssignment.getRequestIds().size() + " requests");
+        return assignedCount;
+    }
+
+    /**
+     * Get agent workload statistics
+     */
+    public Map<String, Object> getAgentWorkload() {
+        List<ServiceRequest> activeRequests = requestRepository.findAll().stream()
+                .filter(r -> r.getAssignedAgent() != null)
+                .filter(r -> r.getStatus() != ServiceRequest.RequestStatus.CLOSED &&
+                        r.getStatus() != ServiceRequest.RequestStatus.RESOLVED &&
+                        r.getStatus() != ServiceRequest.RequestStatus.CANCELLED)
+                .collect(Collectors.toList());
+
+        Map<String, Long> workloadByAgent = activeRequests.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getAssignedAgent().getUsername(),
+                        Collectors.counting()));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("agentWorkload", workloadByAgent);
+        result.put("totalActiveRequests", activeRequests.size());
+
+        return result;
     }
 }

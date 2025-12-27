@@ -37,6 +37,7 @@ import ChangePriorityModal from '../../components/admin/ChangePriorityModal';
 import ChangeStatusModal from '../../components/admin/ChangeStatusModal';
 import EscalateRequestModal from '../../components/admin/EscalateRequestModal';
 import ViewDetailsModal from '../../components/admin/ViewDetailsModal';
+import AssignDepartmentModal from '../../components/admin/AssignDepartmentModal';
 
 const AdminManageRequests = () => {
     const [requests, setRequests] = useState([]);
@@ -51,6 +52,7 @@ const AdminManageRequests = () => {
     const [escalateModalOpen, setEscalateModalOpen] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [assignDeptModalOpen, setAssignDeptModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [requestDetails, setRequestDetails] = useState(null);
 
@@ -153,6 +155,21 @@ const AdminManageRequests = () => {
             loadRequests();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to delete request', 'error');
+        }
+    };
+
+    const handleAssignDepartment = (request) => {
+        setSelectedRequest(request);
+        setAssignDeptModalOpen(true);
+    };
+
+    const handleDepartmentAssignSubmit = async (requestId, departmentId, notes) => {
+        try {
+            await adminRequestService.assignDepartment(requestId, departmentId, notes);
+            showSnackbar('Department assigned successfully');
+            loadRequests();
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to assign department', 'error');
         }
     };
 
@@ -278,6 +295,15 @@ const AdminManageRequests = () => {
                                                     <TrendingUp fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
+                                            <Tooltip title="Assign Department">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleAssignDepartment(request)}
+                                                    color="success"
+                                                >
+                                                    <Business fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                             <Tooltip title="Delete">
                                                 <IconButton
                                                     size="small"
@@ -370,6 +396,14 @@ const AdminManageRequests = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Assign Department Modal */}
+            <AssignDepartmentModal
+                open={assignDeptModalOpen}
+                onClose={() => setAssignDeptModalOpen(false)}
+                request={selectedRequest}
+                onAssign={handleDepartmentAssignSubmit}
+            />
         </Box>
     );
 };

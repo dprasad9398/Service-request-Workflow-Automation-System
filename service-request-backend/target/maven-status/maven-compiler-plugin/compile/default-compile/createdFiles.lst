@@ -2,7 +2,6 @@ com\servicedesk\entity\Approval.class
 com\servicedesk\repository\ServiceCatalogRepository.class
 com\servicedesk\service\SLAMonitoringService.class
 com\servicedesk\security\JwtAuthenticationFilter.class
-com\servicedesk\service\AdminRequestService.class
 com\servicedesk\repository\SLARepository.class
 com\servicedesk\ServiceDeskApplication.class
 com\servicedesk\entity\WorkflowInstance.class
@@ -40,6 +39,7 @@ com\servicedesk\repository\RequestAttachmentRepository.class
 com\servicedesk\repository\TaskRepository.class
 com\servicedesk\controller\NotificationController.class
 com\servicedesk\entity\RequestType.class
+com\servicedesk\dto\BulkAssignmentDTO.class
 com\servicedesk\entity\RequestComment.class
 com\servicedesk\dto\ActivityLogDTO.class
 com\servicedesk\controller\AuthController.class
@@ -60,6 +60,7 @@ com\servicedesk\service\ServiceCatalogService.class
 com\servicedesk\controller\AdminServiceCatalogController.class
 com\servicedesk\dto\UpdateProfileDTO.class
 com\servicedesk\controller\AdminController.class
+com\servicedesk\controller\SystemSettingsController.class
 com\servicedesk\util\TicketIdGenerator.class
 com\servicedesk\entity\ServiceRequest$RequestStatus.class
 com\servicedesk\entity\AuditLog.class
@@ -71,7 +72,6 @@ com\servicedesk\service\AdminService.class
 com\servicedesk\service\CategoryService.class
 com\servicedesk\repository\ApprovalHistoryRepository.class
 com\servicedesk\entity\ApprovalHistory.class
-com\servicedesk\controller\AdminRequestController.class
 com\servicedesk\repository\WorkflowRuleRepository.class
 com\servicedesk\repository\ServiceRequestRepository.class
 com\servicedesk\entity\Notification$NotificationType.class

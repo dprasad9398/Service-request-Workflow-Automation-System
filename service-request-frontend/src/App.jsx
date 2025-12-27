@@ -17,6 +17,10 @@ import UserManagement from './pages/admin/UserManagement';
 import AdminManageRequests from './pages/admin/AdminManageRequests';
 import ServiceCatalogManagement from './pages/admin/ServiceCatalogManagement';
 import CategoryManagement from './pages/admin/CategoryManagement';
+import Reports from './pages/admin/Reports';
+import DepartmentManagement from './pages/admin/DepartmentManagement';
+import SystemSettings from './pages/admin/SystemSettings';
+import AuditLogs from './pages/admin/AuditLogs';
 import CreateRequest from './pages/user/CreateRequest';
 import MyRequests from './pages/MyRequests';
 import RequestDetails from './pages/RequestDetails';
@@ -163,6 +167,46 @@ function App() {
                                 <AdminRoute>
                                     <PageWithLayout>
                                         <CategoryManagement />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/reports"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <Reports />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/departments"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <DepartmentManagement />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/settings"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <SystemSettings />
+                                    </PageWithLayout>
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/audit-logs"
+                            element={
+                                <AdminRoute>
+                                    <PageWithLayout>
+                                        <AuditLogs />
                                     </PageWithLayout>
                                 </AdminRoute>
                             }
