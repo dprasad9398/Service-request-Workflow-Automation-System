@@ -27,6 +27,9 @@ public class ServiceRequestService {
     @Autowired
     private ServiceRequestRepository serviceRequestRepository;
 
+    @Autowired
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     /**
      * Get my service requests
      */
@@ -218,20 +221,39 @@ public class ServiceRequestService {
      */
     public ServiceRequest updateServiceRequestStatus(Long id, ServiceRequest.RequestStatus newStatus) {
         ServiceRequest request = getServiceRequestById(id);
+
+        // Store old status for event
+        ServiceRequest.RequestStatus oldStatus = request.getStatus();
+
         request.setStatus(newStatus);
 
         if (newStatus == ServiceRequest.RequestStatus.CLOSED) {
             request.setClosedAt(LocalDateTime.now());
 
-            // Update SLA tracking
+            // Update SLA tracking - mark as resolution met
             SLATracking slaTracking = slaTrackingRepository.findByRequestId(id).orElse(null);
-            if (slaTracking != null) {
-                slaTracking.setResolutionCompletedAt(LocalDateTime.now());
+            if (slaTracking != null && !slaTracking.isResolutionMet()) {
+                slaTracking.setResolutionMet(true);
                 slaTrackingRepository.save(slaTracking);
             }
         }
 
-        return serviceRequestRepository.save(request);
+        if (newStatus == ServiceRequest.RequestStatus.RESOLVED) {
+            request.setResolvedAt(LocalDateTime.now());
+        }
+
+        ServiceRequest saved = serviceRequestRepository.save(request);
+
+        // Publish event for automation
+        try {
+            eventPublisher.publishEvent(
+                    new com.servicedesk.event.RequestStatusChangeEvent(this, saved, oldStatus, newStatus));
+            logger.info("Published status change event for request #{}: {} -> {}", id, oldStatus, newStatus);
+        } catch (Exception e) {
+            logger.error("Failed to publish status change event for request #{}", id, e);
+        }
+
+        return saved;
     }
 
     /**
@@ -265,6 +287,19 @@ public class ServiceRequestService {
         ServiceRequest request = getServiceRequestById(id);
         request.setResolutionNotes(notes);
         request.setStatus(ServiceRequest.RequestStatus.RESOLVED);
+        return serviceRequestRepository.save(request);
+    }
+
+    /**
+     * Close a resolved request
+     */
+    public ServiceRequest closeRequest(Long id) {
+        ServiceRequest request = getServiceRequestById(id);
+        if (request.getStatus() != ServiceRequest.RequestStatus.RESOLVED) {
+            throw new IllegalArgumentException("Only resolved requests can be closed");
+        }
+        request.setStatus(ServiceRequest.RequestStatus.CLOSED);
+        request.setClosedAt(LocalDateTime.now());
         return serviceRequestRepository.save(request);
     }
 

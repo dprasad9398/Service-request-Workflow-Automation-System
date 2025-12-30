@@ -10,8 +10,6 @@ import com.servicedesk.repository.ServiceCatalogRepository;
 import com.servicedesk.repository.ServiceCategoryRepository;
 import com.servicedesk.repository.SLARepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +36,7 @@ public class ServiceCatalogService {
      * Get all service categories
      */
     public List<ServiceCategoryDTO> getAllCategories() {
-        return serviceCategoryRepository.findAll().stream()
+        return serviceCategoryRepository.findByDeletedFalse().stream()
                 .map(this::mapCategoryToDTO)
                 .collect(Collectors.toList());
     }
@@ -47,7 +45,7 @@ public class ServiceCatalogService {
      * Get active categories only
      */
     public List<ServiceCategoryDTO> getActiveCategories() {
-        return serviceCategoryRepository.findByIsActiveTrueOrderByNameAsc().stream()
+        return serviceCategoryRepository.findByDeletedFalseAndIsActiveTrueOrderByNameAsc().stream()
                 .map(this::mapCategoryToDTO)
                 .collect(Collectors.toList());
     }
@@ -264,14 +262,14 @@ public class ServiceCatalogService {
      * Check if category name exists
      */
     public boolean categoryNameExists(String name) {
-        return serviceCategoryRepository.existsByName(name);
+        return serviceCategoryRepository.existsByNameAndDeletedFalse(name);
     }
 
     /**
      * Check if category name exists excluding a specific ID
      */
     public boolean categoryNameExistsExcludingId(String name, Long excludeId) {
-        return serviceCategoryRepository.findByName(name)
+        return serviceCategoryRepository.findByNameAndDeletedFalse(name)
                 .map(category -> !category.getId().equals(excludeId))
                 .orElse(false);
     }
@@ -297,6 +295,7 @@ public class ServiceCatalogService {
         ServiceCategory category = serviceCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
         category.setIsActive(false);
+        category.setDeleted(true);
         serviceCategoryRepository.save(category);
     }
 }

@@ -38,6 +38,7 @@ import ChangeStatusModal from '../../components/admin/ChangeStatusModal';
 import EscalateRequestModal from '../../components/admin/EscalateRequestModal';
 import ViewDetailsModal from '../../components/admin/ViewDetailsModal';
 import AssignDepartmentModal from '../../components/admin/AssignDepartmentModal';
+import AssignAgentModal from '../../components/admin/AssignAgentModal';
 
 const AdminManageRequests = () => {
     const [requests, setRequests] = useState([]);
@@ -53,6 +54,7 @@ const AdminManageRequests = () => {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [assignDeptModalOpen, setAssignDeptModalOpen] = useState(false);
+    const [assignAgentModalOpen, setAssignAgentModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [requestDetails, setRequestDetails] = useState(null);
 
@@ -170,6 +172,21 @@ const AdminManageRequests = () => {
             loadRequests();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to assign department', 'error');
+        }
+    };
+
+    const handleAssignAgent = (request) => {
+        setSelectedRequest(request);
+        setAssignAgentModalOpen(true);
+    };
+
+    const handleAgentAssignSubmit = async (requestId, agentId, notes) => {
+        try {
+            await adminRequestService.assignAgent(requestId, agentId, notes);
+            showSnackbar('Agent assigned successfully');
+            loadRequests();
+        } catch (error) {
+            showSnackbar(error.response?.data?.message || 'Failed to assign agent', 'error');
         }
     };
 
@@ -304,6 +321,15 @@ const AdminManageRequests = () => {
                                                     <Business fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
+                                            <Tooltip title="Assign Agent">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleAssignAgent(request)}
+                                                    color="secondary"
+                                                >
+                                                    <Person fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                             <Tooltip title="Delete">
                                                 <IconButton
                                                     size="small"
@@ -403,6 +429,14 @@ const AdminManageRequests = () => {
                 onClose={() => setAssignDeptModalOpen(false)}
                 request={selectedRequest}
                 onAssign={handleDepartmentAssignSubmit}
+            />
+
+            {/* Assign Agent Modal */}
+            <AssignAgentModal
+                open={assignAgentModalOpen}
+                onClose={() => setAssignAgentModalOpen(false)}
+                request={selectedRequest}
+                onAssign={handleAgentAssignSubmit}
             />
         </Box>
     );

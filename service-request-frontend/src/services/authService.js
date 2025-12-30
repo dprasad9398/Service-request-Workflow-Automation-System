@@ -6,7 +6,8 @@ export const ROLES = {
     USER: 'ROLE_USER',
     END_USER: 'ROLE_END_USER',
     APPROVER: 'ROLE_APPROVER',
-    AGENT: 'ROLE_AGENT'
+    AGENT: 'ROLE_AGENT',
+    DEPARTMENT: 'ROLE_DEPARTMENT'
 };
 
 /**
@@ -81,6 +82,7 @@ const authService = {
         const roles = authService.getUserRoles();
 
         if (roles.includes(ROLES.ADMIN)) return ROLES.ADMIN;
+        if (roles.includes(ROLES.DEPARTMENT)) return ROLES.DEPARTMENT;
         if (roles.includes(ROLES.APPROVER)) return ROLES.APPROVER;
         if (roles.includes(ROLES.AGENT)) return ROLES.AGENT;
         if (roles.includes(ROLES.USER)) return ROLES.USER;
@@ -112,6 +114,8 @@ const authService = {
         switch (primaryRole) {
             case ROLES.ADMIN:
                 return '/admin/dashboard';
+            case ROLES.DEPARTMENT:
+                return '/department/dashboard';
             case ROLES.APPROVER:
                 return '/approvals';
             case ROLES.AGENT:

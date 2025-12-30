@@ -1,9 +1,12 @@
 package com.servicedesk.service;
 
+import com.servicedesk.entity.Department;
 import com.servicedesk.entity.Notification;
 import com.servicedesk.entity.ServiceRequest;
 import com.servicedesk.entity.User;
 import com.servicedesk.repository.NotificationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +22,8 @@ import java.util.List;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     @Autowired
@@ -132,5 +137,41 @@ public class NotificationService {
             createNotification(request.getAssignedTo(), title, message,
                     Notification.NotificationType.WARNING, request);
         }
+    }
+
+    /**
+     * Notify a specific user
+     */
+    public void notifyUser(User user, String subject, String message) {
+        log.info("Notifying user {}: {} - {}", user.getUsername(), subject, message);
+        // Delegate to existing notification creation
+        createNotification(user, subject, message, Notification.NotificationType.INFO, null);
+    }
+
+    /**
+     * Notify a department
+     */
+    public void notifyDepartment(Department dept, String subject, String message) {
+        log.info("Notifying department {}: {} - {}", dept.getName(), subject, message);
+        // TODO: Implement department-wide notification
+    }
+
+    /**
+     * Notify the assigned user of a request
+     */
+    public void notifyAssignedUser(ServiceRequest request, String subject, String message) {
+        if (request.getAssignedTo() != null) {
+            notifyUser(request.getAssignedTo(), subject, message);
+        } else {
+            log.warn("Cannot notify assigned user for request #{} - no user assigned", request.getId());
+        }
+    }
+
+    /**
+     * Notify management
+     */
+    public void notifyManagement(String subject, String message) {
+        log.info("Notifying management: {} - {}", subject, message);
+        // TODO: Implement management notification
     }
 }

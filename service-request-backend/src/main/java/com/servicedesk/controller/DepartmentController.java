@@ -58,4 +58,61 @@ public class DepartmentController {
         List<User> agents = departmentService.getAllAgents();
         return ResponseEntity.ok(agents);
     }
+
+    /**
+     * Toggle department active status
+     * PATCH /api/admin/departments/{id}/toggle-status
+     */
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<Department> toggleDepartmentStatus(@PathVariable Long id) {
+        System.out.println("=== ADMIN: Toggling status for department " + id + " ===");
+
+        Department department = departmentService.toggleDepartmentStatus(id);
+        return ResponseEntity.ok(department);
+    }
+
+    /**
+     * Create department
+     * POST /api/admin/departments
+     */
+    @PostMapping
+    public ResponseEntity<?> createDepartment(@RequestBody Department department) {
+        System.out.println("=== ADMIN: Creating department: " + department.getName() + " ===");
+        try {
+            Department newDepartment = departmentService.createDepartment(department);
+            return ResponseEntity.ok(newDepartment);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Update department
+     * PUT /api/admin/departments/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateDepartment(@PathVariable Long id, @RequestBody Department department) {
+        System.out.println("=== ADMIN: Updating department: " + id + " ===");
+        try {
+            Department updatedDepartment = departmentService.updateDepartment(id, department);
+            return ResponseEntity.ok(updatedDepartment);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Delete department
+     * DELETE /api/admin/departments/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDepartment(@PathVariable Long id) {
+        System.out.println("=== ADMIN: Deleting department: " + id + " ===");
+        try {
+            departmentService.deleteDepartment(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

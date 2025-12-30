@@ -123,6 +123,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- WebSocket for Real-Time Updates -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
     </dependencies>
 
     <!-- Build -->

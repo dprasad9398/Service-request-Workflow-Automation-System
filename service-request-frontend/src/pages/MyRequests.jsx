@@ -16,9 +16,14 @@ import {
     IconButton,
     TextField,
     MenuItem,
-    Button
+    Button,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from '@mui/material';
-import { Visibility, Refresh } from '@mui/icons-material';
+import { Visibility, Refresh, Close } from '@mui/icons-material';
 import requestService from '../services/requestService';
 
 const statusColors = {
@@ -49,6 +54,7 @@ const MyRequests = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalElements, setTotalElements] = useState(0);
     const [filterStatus, setFilterStatus] = useState('');
+    const [closeDialog, setCloseDialog] = useState({ open: false, requestId: null });
 
     useEffect(() => {
         loadRequests();
@@ -93,6 +99,17 @@ const MyRequests = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const handleCloseRequest = async () => {
+        try {
+            await requestService.closeRequest(closeDialog.requestId);
+            setCloseDialog({ open: false, requestId: null });
+            loadRequests();
+        } catch (error) {
+            console.error('Failed to close request:', error);
+            alert('Failed to close request: ' + (error.response?.data?.message || error.message));
+        }
     };
 
     return (
@@ -166,7 +183,19 @@ const MyRequests = () => {
                                                     {request.ticketId}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>{request.title}</TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">{request.title}</Typography>
+                                                {request.status === 'REJECTED' && request.rejectionReason && (
+                                                    <Alert severity="error" sx={{ mt: 1, fontSize: '0.75rem' }}>
+                                                        <strong>Rejected:</strong> {request.rejectionReason}
+                                                    </Alert>
+                                                )}
+                                                {request.status === 'RESOLVED' && request.resolutionNotes && (
+                                                    <Alert severity="success" sx={{ mt: 1, fontSize: '0.75rem' }}>
+                                                        <strong>Resolution:</strong> {request.resolutionNotes}
+                                                    </Alert>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{request.service?.name || '-'}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -188,9 +217,20 @@ const MyRequests = () => {
                                                     size="small"
                                                     color="primary"
                                                     onClick={() => navigate(`/request/${request.id}`)}
+                                                    title="View Details"
                                                 >
                                                     <Visibility />
                                                 </IconButton>
+                                                {request.status === 'RESOLVED' && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="success"
+                                                        onClick={() => setCloseDialog({ open: true, requestId: request.id })}
+                                                        title="Close Request"
+                                                    >
+                                                        <Close />
+                                                    </IconButton>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))

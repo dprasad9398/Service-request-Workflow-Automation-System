@@ -33,7 +33,7 @@ const departmentService = {
      * Create new department
      */
     createDepartment: async (departmentData) => {
-        const response = await api.post('/departments', departmentData);
+        const response = await api.post('/admin/departments', departmentData);
         return response.data;
     },
 
@@ -41,7 +41,7 @@ const departmentService = {
      * Update department
      */
     updateDepartment: async (id, departmentData) => {
-        const response = await api.put(`/departments/${id}`, departmentData);
+        const response = await api.put(`/admin/departments/${id}`, departmentData);
         return response.data;
     },
 
@@ -49,7 +49,7 @@ const departmentService = {
      * Delete department
      */
     deleteDepartment: async (id) => {
-        const response = await api.delete(`/departments/${id}`);
+        const response = await api.delete(`/admin/departments/${id}`);
         return response.data;
     },
 
@@ -57,7 +57,7 @@ const departmentService = {
      * Toggle department active status
      */
     toggleDepartmentStatus: async (id) => {
-        const response = await api.patch(`/departments/${id}/toggle-status`);
+        const response = await api.patch(`/admin/departments/${id}/toggle-status`);
         return response.data;
     }
 };

@@ -38,17 +38,14 @@ public class SLATracking {
     @Column(name = "resolution_due_at", nullable = false)
     private LocalDateTime resolutionDueAt;
 
-    @Column(name = "response_completed_at")
-    private LocalDateTime responseCompletedAt;
+    @Column(name = "response_met", nullable = false)
+    private boolean responseMet = false;
 
-    @Column(name = "resolution_completed_at")
-    private LocalDateTime resolutionCompletedAt;
+    @Column(name = "resolution_met", nullable = false)
+    private boolean resolutionMet = false;
 
-    @Column(name = "is_response_breached", nullable = false)
-    private Boolean isResponseBreached = false;
-
-    @Column(name = "is_resolution_breached", nullable = false)
-    private Boolean isResolutionBreached = false;
+    @Column(name = "breached", nullable = false)
+    private boolean breached = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

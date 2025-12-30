@@ -40,23 +40,27 @@ public class SLAMonitoringService {
         // Check response SLA breaches
         List<SLATracking> responseBreaches = slaTrackingRepository.findResponseSLABreaches(now);
         responseBreaches.forEach(tracking -> {
-            tracking.setIsResponseBreached(true);
-            slaTrackingRepository.save(tracking);
+            if (tracking.getResponseDueAt().isBefore(now) && !tracking.isResponseMet()) {
+                tracking.setBreached(true);
+                slaTrackingRepository.save(tracking);
 
-            // Send notification
-            ServiceRequest request = tracking.getRequest();
-            notificationService.sendSLABreachNotification(request, "Response");
+                // Send notification
+                ServiceRequest request = tracking.getRequest();
+                notificationService.sendSLABreachNotification(request, "Response");
+            }
         });
 
         // Check resolution SLA breaches
         List<SLATracking> resolutionBreaches = slaTrackingRepository.findResolutionSLABreaches(now);
         resolutionBreaches.forEach(tracking -> {
-            tracking.setIsResolutionBreached(true);
-            slaTrackingRepository.save(tracking);
+            if (tracking.getResolutionDueAt().isBefore(now) && !tracking.isResolutionMet()) {
+                tracking.setBreached(true);
+                slaTrackingRepository.save(tracking);
 
-            // Send notification
-            ServiceRequest request = tracking.getRequest();
-            notificationService.sendSLABreachNotification(request, "Resolution");
+                // Send notification
+                ServiceRequest request = tracking.getRequest();
+                notificationService.sendSLABreachNotification(request, "Resolution");
+            }
         });
     }
 

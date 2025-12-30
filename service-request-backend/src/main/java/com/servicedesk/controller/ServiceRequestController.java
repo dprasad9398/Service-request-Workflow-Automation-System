@@ -4,6 +4,9 @@ import com.servicedesk.dto.ApiResponse;
 import com.servicedesk.dto.ServiceRequestDTO;
 import com.servicedesk.entity.ServiceRequest;
 import com.servicedesk.service.ServiceRequestService;
+import com.servicedesk.service.AutoAssignmentService;
+import com.servicedesk.service.SLAService;
+import com.servicedesk.service.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +33,16 @@ public class ServiceRequestController {
     @Autowired
     private ServiceRequestService serviceRequestService;
 
+    // Automation Services
+    @Autowired
+    private AutoAssignmentService autoAssignmentService;
+
+    @Autowired
+    private SLAService slaService;
+
+    @Autowired
+    private EmailService emailService;
+
     /**
      * Create new service request
      * POST /api/requests
@@ -41,6 +54,31 @@ public class ServiceRequestController {
         try {
             String username = authentication.getName();
             ServiceRequest request = serviceRequestService.createServiceRequest(requestDTO, username);
+
+            // AUTOMATION: Auto-assign to department
+            try {
+                autoAssignmentService.autoAssignRequest(request);
+                logger.info("Auto-assignment triggered for request #{}", request.getId());
+            } catch (Exception e) {
+                logger.error("Auto-assignment failed for request #{}", request.getId(), e);
+            }
+
+            // AUTOMATION: Start SLA tracking
+            try {
+                slaService.startSLATracking(request);
+                logger.info("SLA tracking started for request #{}", request.getId());
+            } catch (Exception e) {
+                logger.error("SLA tracking failed for request #{}", request.getId(), e);
+            }
+
+            // AUTOMATION: Send creation email
+            try {
+                emailService.sendRequestCreatedEmail(request);
+                logger.info("Creation email sent for request #{}", request.getId());
+            } catch (Exception e) {
+                logger.error("Email sending failed for request #{}", request.getId(), e);
+            }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(request);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -232,6 +270,21 @@ public class ServiceRequestController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "Error adding resolution: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Close a resolved request
+     * PUT /api/requests/{id}/close
+     */
+    @PutMapping("/{id}/close")
+    public ResponseEntity<?> closeRequest(@PathVariable Long id) {
+        try {
+            ServiceRequest request = serviceRequestService.closeRequest(id);
+            return ResponseEntity.ok(request);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error closing request: " + e.getMessage()));
         }
     }
 }

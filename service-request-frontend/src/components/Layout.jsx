@@ -215,6 +215,20 @@ const Layout = ({ children }) => {
                                 My Tasks
                             </Button>
                         )}
+
+                        {/* Department navigation */}
+                        {hasRole('ROLE_DEPARTMENT') && (
+                            <Button
+                                color="inherit"
+                                startIcon={<DashboardIcon />}
+                                onClick={() => navigate('/department/dashboard')}
+                                sx={{
+                                    backgroundColor: isActive('/department/dashboard') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                                }}
+                            >
+                                Dept Dashboard
+                            </Button>
+                        )}
                     </Box>
 
                     <IconButton color="inherit" sx={{ mr: 1 }}>

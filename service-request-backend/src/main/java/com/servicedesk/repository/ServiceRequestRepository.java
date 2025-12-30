@@ -60,4 +60,17 @@ public interface ServiceRequestRepository
 
         @Query("SELECT COUNT(sr) FROM ServiceRequest sr WHERE sr.priority = :priority")
         Long countByPriority(@Param("priority") ServiceRequest.Priority priority);
+
+        // Find requests by status and resolved date (for auto-closing)
+        List<ServiceRequest> findByStatusAndResolvedAtBefore(ServiceRequest.RequestStatus status,
+                        LocalDateTime resolvedAt);
+
+        @Override
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+                        "service", "service.category",
+                        "requester", "assignedTo", "category", "requestType",
+                        "department", "assignedAgent"
+        })
+        Page<ServiceRequest> findAll(org.springframework.data.jpa.domain.Specification<ServiceRequest> spec,
+                        Pageable pageable);
 }

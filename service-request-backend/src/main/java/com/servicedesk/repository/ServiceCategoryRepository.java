@@ -20,4 +20,13 @@ public interface ServiceCategoryRepository extends JpaRepository<ServiceCategory
     List<ServiceCategory> findByIsActiveTrueOrderByNameAsc();
 
     boolean existsByName(String name);
+
+    // Soft delete support
+    List<ServiceCategory> findByDeletedFalse();
+
+    List<ServiceCategory> findByDeletedFalseAndIsActiveTrueOrderByNameAsc();
+
+    boolean existsByNameAndDeletedFalse(String name);
+
+    Optional<ServiceCategory> findByNameAndDeletedFalse(String name);
 }

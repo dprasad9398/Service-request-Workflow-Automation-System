@@ -11,22 +11,54 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository interface for SLATracking entity
+ * Repository for SLA Tracking Entity
  */
 @Repository
 public interface SLATrackingRepository extends JpaRepository<SLATracking, Long> {
 
+    /**
+     * Find tracking by request ID
+     */
     Optional<SLATracking> findByRequestId(Long requestId);
 
-    @Query("SELECT s FROM SLATracking s WHERE s.responseDueAt < :currentTime AND s.responseCompletedAt IS NULL AND s.isResponseBreached = false")
-    List<SLATracking> findResponseSLABreaches(@Param("currentTime") LocalDateTime currentTime);
+    /**
+     * Find overdue requests (resolution time passed and not breached yet)
+     */
+    List<SLATracking> findByResolutionDueAtBeforeAndBreachedFalse(LocalDateTime now);
 
-    @Query("SELECT s FROM SLATracking s WHERE s.resolutionDueAt < :currentTime AND s.resolutionCompletedAt IS NULL AND s.isResolutionBreached = false")
-    List<SLATracking> findResolutionSLABreaches(@Param("currentTime") LocalDateTime currentTime);
+    /**
+     * Find requests approaching deadline
+     */
+    List<SLATracking> findByResolutionDueAtBetweenAndBreachedFalse(
+            LocalDateTime start,
+            LocalDateTime end);
 
-    @Query("SELECT COUNT(s) FROM SLATracking s WHERE s.isResponseBreached = true")
-    Long countResponseBreaches();
+    /**
+     * Count breached SLAs
+     */
+    long countByBreachedTrue();
 
-    @Query("SELECT COUNT(s) FROM SLATracking s WHERE s.isResolutionBreached = true")
-    Long countResolutionBreaches();
+    /**
+     * Find response SLA breaches
+     */
+    @Query("SELECT s FROM SLATracking s WHERE s.responseDueAt < :now AND s.responseMet = false AND s.breached = false")
+    List<SLATracking> findResponseSLABreaches(@Param("now") LocalDateTime now);
+
+    /**
+     * Find resolution SLA breaches
+     */
+    @Query("SELECT s FROM SLATracking s WHERE s.resolutionDueAt < :now AND s.resolutionMet = false AND s.breached = false")
+    List<SLATracking> findResolutionSLABreaches(@Param("now") LocalDateTime now);
+
+    /**
+     * Count response breaches
+     */
+    @Query("SELECT COUNT(s) FROM SLATracking s WHERE s.responseDueAt < CURRENT_TIMESTAMP AND s.responseMet = false")
+    long countResponseBreaches();
+
+    /**
+     * Count resolution breaches
+     */
+    @Query("SELECT COUNT(s) FROM SLATracking s WHERE s.resolutionDueAt < CURRENT_TIMESTAMP AND s.resolutionMet = false")
+    long countResolutionBreaches();
 }

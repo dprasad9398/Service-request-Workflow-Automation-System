@@ -35,8 +35,10 @@ import {
     CheckCircle,
     Cancel,
     PersonAdd,
-    AdminPanelSettings
+    AdminPanelSettings,
+    ManageAccounts
 } from '@mui/icons-material';
+import AssignRoleModal from '../../components/admin/AssignRoleModal';
 
 const UserManagement = () => {
     const navigate = useNavigate();
@@ -45,6 +47,8 @@ const UserManagement = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [openDialog, setOpenDialog] = useState(false);
+    const [openRoleModal, setOpenRoleModal] = useState(false);
+    const [selectedUserForRole, setSelectedUserForRole] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [formData, setFormData] = useState({
@@ -164,8 +168,20 @@ const UserManagement = () => {
         }
     };
 
+    const handleOpenRoleModal = (user) => {
+        setSelectedUserForRole(user);
+        setOpenRoleModal(true);
+    };
+
+    const handleCloseRoleModal = () => {
+        setOpenRoleModal(false);
+        setSelectedUserForRole(null);
+        loadUsers(); // Refresh user list after role changes
+    };
+
     const getRoleColor = (roles) => {
         if (roles?.includes('ROLE_ADMIN')) return 'error';
+        if (roles?.includes('ROLE_DEPARTMENT')) return 'secondary';
         if (roles?.includes('ROLE_APPROVER')) return 'warning';
         if (roles?.includes('ROLE_AGENT')) return 'info';
         return 'default';
@@ -173,6 +189,7 @@ const UserManagement = () => {
 
     const getRoleLabel = (roles) => {
         if (roles?.includes('ROLE_ADMIN')) return 'Admin';
+        if (roles?.includes('ROLE_DEPARTMENT')) return 'Department';
         if (roles?.includes('ROLE_APPROVER')) return 'Approver';
         if (roles?.includes('ROLE_AGENT')) return 'Agent';
         if (roles?.includes('ROLE_USER')) return 'User';
@@ -271,6 +288,15 @@ const UserManagement = () => {
                                                 onClick={() => handleToggleActive(user)}
                                             >
                                                 {user.isActive ? <Cancel /> : <CheckCircle />}
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Manage Roles">
+                                            <IconButton
+                                                color="secondary"
+                                                size="small"
+                                                onClick={() => handleOpenRoleModal(user)}
+                                            >
+                                                <ManageAccounts />
                                             </IconButton>
                                         </Tooltip>
                                         <Tooltip title="Delete User">
@@ -380,6 +406,7 @@ const UserManagement = () => {
                                 >
                                     <MenuItem value="ROLE_USER">User</MenuItem>
                                     <MenuItem value="ROLE_ADMIN">Admin</MenuItem>
+                                    <MenuItem value="ROLE_DEPARTMENT">Department</MenuItem>
                                     <MenuItem value="ROLE_APPROVER">Approver</MenuItem>
                                     <MenuItem value="ROLE_AGENT">Agent</MenuItem>
                                 </Select>
@@ -393,6 +420,14 @@ const UserManagement = () => {
                         </Button>
                     </DialogActions>
                 </Dialog>
+
+                {/* Assign Role Modal */}
+                <AssignRoleModal
+                    open={openRoleModal}
+                    onClose={handleCloseRoleModal}
+                    user={selectedUserForRole}
+                    onSuccess={handleCloseRoleModal}
+                />
             </Box>
         </Container>
     );

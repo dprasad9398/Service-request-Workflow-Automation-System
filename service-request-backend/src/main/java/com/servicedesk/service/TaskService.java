@@ -1,8 +1,10 @@
 package com.servicedesk.service;
 
 import com.servicedesk.entity.*;
+import com.servicedesk.entity.Task;
 import com.servicedesk.exception.ResourceNotFoundException;
 import com.servicedesk.repository.*;
+import com.servicedesk.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

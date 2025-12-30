@@ -5,20 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 /**
  * SLA (Service Level Agreement) Entity
- * Defines response and resolution time expectations
+ * Defines service level agreements for different priorities
  */
 @Entity
 @Table(name = "sla")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class SLA {
 
     @Id
@@ -28,27 +26,24 @@ public class SLA {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Priority priority;
+
     @Column(name = "response_time_hours", nullable = false)
-    private Integer responseTimeHours;
+    private int responseTimeHours;
 
     @Column(name = "resolution_time_hours", nullable = false)
-    private Integer resolutionTimeHours;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    private int resolutionTimeHours;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    public SLA(String name, Integer responseTimeHours, Integer resolutionTimeHours, String description) {
-        this.name = name;
-        this.responseTimeHours = responseTimeHours;
-        this.resolutionTimeHours = resolutionTimeHours;
-        this.description = description;
+    /**
+     * Priority Enum
+     */
+    public enum Priority {
+        LOW, MEDIUM, HIGH, CRITICAL
     }
 }

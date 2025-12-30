@@ -101,6 +101,14 @@ const requestService = {
     resolveRequest: async (id, notes) => {
         const response = await api.post(`/requests/${id}/resolve`, notes);
         return response.data;
+    },
+
+    /**
+     * Close a resolved request
+     */
+    closeRequest: async (id) => {
+        const response = await api.put(`/requests/${id}/close`);
+        return response.data;
     }
 };
 

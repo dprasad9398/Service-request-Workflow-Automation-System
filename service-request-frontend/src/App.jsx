@@ -26,6 +26,7 @@ import MyRequests from './pages/MyRequests';
 import RequestDetails from './pages/RequestDetails';
 import ApproverDashboard from './pages/ApproverDashboard';
 import AgentDashboard from './pages/AgentDashboard';
+import DepartmentDashboard from './pages/department/DepartmentDashboard';
 import Unauthorized from './pages/Unauthorized';
 import authService from './services/authService';
 
@@ -283,6 +284,16 @@ function App() {
                                 <ProtectedRoute requiredRole="ROLE_APPROVER">
                                     <PageWithLayout>
                                         <ApproverDashboard />
+                                    </PageWithLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/department/dashboard"
+                            element={
+                                <ProtectedRoute requiredRole="ROLE_DEPARTMENT">
+                                    <PageWithLayout>
+                                        <DepartmentDashboard />
                                     </PageWithLayout>
                                 </ProtectedRoute>
                             }

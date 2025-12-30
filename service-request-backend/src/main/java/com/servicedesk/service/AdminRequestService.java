@@ -12,6 +12,7 @@ import com.servicedesk.dto.RequestDetailsDTO;
 import com.servicedesk.dto.BulkAssignmentDTO;
 import com.servicedesk.entity.*;
 import com.servicedesk.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
+@Slf4j
 public class AdminRequestService {
 
     @Autowired
@@ -118,7 +120,7 @@ public class AdminRequestService {
         // Assign department
         request.setDepartment(department);
         request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
-        ServiceRequest savedRequest = requestRepository.save(request);
+        ServiceRequest savedRequest = requestRepository.saveAndFlush(request);
 
         // Log status change
         logStatusChange(savedRequest, "Assigned to department: " + department.getName() +
@@ -126,6 +128,8 @@ public class AdminRequestService {
 
         System.out.println(
                 "✓ Request " + savedRequest.getTicketId() + " assigned to department: " + department.getName());
+        System.out.println("DEBUG: Saved Request Dept: "
+                + (savedRequest.getDepartment() != null ? savedRequest.getDepartment().getName() : "NULL"));
 
         return convertToDTO(savedRequest);
     }
@@ -182,10 +186,16 @@ public class AdminRequestService {
             return;
         }
 
-        mappingRepository.findByCategoryId(request.getCategory().getId())
+        // Auto-assign to department if mapping exists
+        List<CategoryDepartmentMapping> mappings = mappingRepository
+                .findByCategoryId(request.getCategory().getId());
+
+        mappings.stream().findFirst()
                 .ifPresent(mapping -> {
                     request.setDepartment(mapping.getDepartment());
-                    System.out.println("Auto-assigned department: " + mapping.getDepartment().getName());
+                    request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
+                    log.info("Auto-assigned request #{} to department: {}",
+                            request.getId(), mapping.getDepartment().getName());
                 });
     }
 
@@ -210,6 +220,7 @@ public class AdminRequestService {
         dto.setDescription(request.getDescription());
         dto.setPriority(request.getPriority().toString());
         dto.setStatus(request.getStatus().toString());
+        dto.setDepartmentId(request.getDepartment() != null ? request.getDepartment().getId() : null);
         dto.setDepartmentName(request.getDepartment() != null ? request.getDepartment().getName() : "Unassigned");
         dto.setAssignedAgentName(
                 request.getAssignedAgent() != null ? request.getAssignedAgent().getUsername() : "Unassigned");

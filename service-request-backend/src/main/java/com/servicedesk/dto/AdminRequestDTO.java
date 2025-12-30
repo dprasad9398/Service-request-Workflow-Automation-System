@@ -23,9 +23,12 @@ public class AdminRequestDTO {
     private String description;
     private String priority;
     private String status;
+    private Long departmentId;
     private String departmentName;
     private String assignedAgentName;
     private String assignedAgentEmail;
+    private String rejectionReason;
+    private String lastUpdatedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

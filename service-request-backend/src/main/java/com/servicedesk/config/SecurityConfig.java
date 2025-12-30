@@ -83,6 +83,9 @@ public class SecurityConfig {
                         // Admin endpoints - require ROLE_ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // Department endpoints - require ROLE_DEPARTMENT or ROLE_ADMIN
+                        .requestMatchers("/api/department/**").hasAnyRole("DEPARTMENT", "ADMIN")
+
                         // User endpoints - require ROLE_USER, ROLE_END_USER, or ROLE_ADMIN
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "END_USER", "ADMIN")
 

@@ -87,6 +87,12 @@ public class ServiceRequest {
     @Column(name = "resolution_notes", columnDefinition = "TEXT")
     private String resolutionNotes;
 
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -94,6 +100,10 @@ public class ServiceRequest {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_updated_by")
+    private User lastUpdatedBy;
 
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
@@ -126,6 +136,7 @@ public class ServiceRequest {
         REJECTED,
         ASSIGNED,
         IN_PROGRESS,
+        WAITING_FOR_USER,
         RESOLVED,
         CLOSED,
         CANCELLED

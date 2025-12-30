@@ -40,6 +40,9 @@ public class ServiceCategory {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -53,5 +56,13 @@ public class ServiceCategory {
         this.description = description;
         this.icon = icon;
         this.isActive = true;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 }
