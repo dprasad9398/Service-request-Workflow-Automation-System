@@ -46,11 +46,18 @@ public class DepartmentRequestService {
             return Page.empty();
         }
 
+        System.out.println("DEBUG: Fetching requests for user: " + currentUser.getUsername() + ", Department: "
+                + currentUser.getDepartment());
+
         Specification<ServiceRequest> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Filter by department name matching user's department
-            predicates.add(cb.equal(root.get("department").get("name"), currentUser.getDepartment()));
+            // Safe check for null department in request
+            if (currentUser.getDepartment() != null) {
+                // Case insensitive match
+                predicates.add(cb.equal(cb.lower(root.get("department").get("name")),
+                        currentUser.getDepartment().toLowerCase()));
+            }
 
             if (status != null && !status.isEmpty() && !status.equals("ALL")) {
                 predicates.add(cb.equal(root.get("status"), ServiceRequest.RequestStatus.valueOf(status)));

@@ -1,6 +1,7 @@
 package com.servicedesk.controller;
 
 import com.servicedesk.dto.*;
+import com.servicedesk.dto.UserProfileDTO;
 import com.servicedesk.entity.RequestStatusHistory;
 import com.servicedesk.service.AdminRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -283,6 +284,27 @@ public class AdminRequestController {
             System.err.println("Error fetching agent workload: " + e.getMessage());
             return ResponseEntity.status(500)
                     .body(Map.of("error", "Failed to fetch agent workload"));
+        }
+    }
+
+    /**
+     * Get agents by department
+     * GET /api/admin/requests/agents?departmentId={id}
+     */
+    @GetMapping("/agents")
+    public ResponseEntity<?> getAgentsByDepartment(@RequestParam Long departmentId) {
+        System.out.println("=== ADMIN: Fetching agents for department " + departmentId + " ===");
+        try {
+            List<UserProfileDTO> agents = adminRequestService.getAgentsByDepartment(departmentId);
+            return ResponseEntity.ok(agents);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error fetching agents: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "Internal server error: " + e.getMessage()));
         }
     }
 }

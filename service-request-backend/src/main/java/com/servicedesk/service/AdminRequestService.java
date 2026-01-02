@@ -10,6 +10,7 @@ import com.servicedesk.dto.UpdatePriorityDTO;
 import com.servicedesk.dto.EscalateRequestDTO;
 import com.servicedesk.dto.RequestDetailsDTO;
 import com.servicedesk.dto.BulkAssignmentDTO;
+import com.servicedesk.dto.UserProfileDTO;
 import com.servicedesk.entity.*;
 import com.servicedesk.repository.*;
 import lombok.extern.slf4j.Slf4j;
@@ -141,8 +142,29 @@ public class AdminRequestService {
         ServiceRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
+        // Validate request has a department
+        if (request.getDepartment() == null) {
+            throw new IllegalArgumentException(
+                    "Request is not assigned to any department. Assign to department first.");
+        }
+
         User agent = userRepository.findById(dto.getAgentId())
                 .orElseThrow(() -> new RuntimeException("Agent not found"));
+
+        // Validate agent role
+        boolean isAgent = agent.getRoles().stream()
+                .anyMatch(r -> r.getName().equals("ROLE_DEPARTMENT"));
+        if (!isAgent) {
+            throw new IllegalArgumentException("Selected user does not have Agent role (ROLE_DEPARTMENT)");
+        }
+
+        // Validate agent department matches request department
+        // Note: User.department is String, Request.Department is Entity
+        if (agent.getDepartment() == null
+                || !agent.getDepartment().equalsIgnoreCase(request.getDepartment().getName())) {
+            throw new IllegalArgumentException("Agent belongs to '" + agent.getDepartment() +
+                    "', but request is in '" + request.getDepartment().getName() + "'");
+        }
 
         request.setAssignedAgent(agent);
         request.setStatus(ServiceRequest.RequestStatus.IN_PROGRESS);
@@ -155,7 +177,36 @@ public class AdminRequestService {
         logStatusChange(request, "Assigned to agent: " + agent.getUsername() +
                 (dto.getNotes() != null ? ". Notes: " + dto.getNotes() : ""));
 
-        System.out.println("Request " + request.getTicketId() + " assigned to agent: " + agent.getUsername());
+        System.out.println("✓ Request " + request.getTicketId() + " assigned to agent: " + agent.getUsername());
+    }
+
+    /**
+     * Get agents by department
+     */
+    public List<UserProfileDTO> getAgentsByDepartment(Long departmentId) {
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+
+        List<User> agents = userRepository.findByDepartmentAndRolesName(department.getName(), "ROLE_DEPARTMENT");
+
+        return agents.stream()
+                .map(this::convertUserToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private UserProfileDTO convertUserToDTO(User user) {
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setDepartment(user.getDepartment());
+        // Add roles just in case
+        dto.setRoles(user.getRoles().stream()
+                .map(r -> r.getName().replace("ROLE_", ""))
+                .collect(Collectors.toSet()));
+        return dto;
     }
 
     /**

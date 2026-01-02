@@ -142,7 +142,7 @@ const CreateRequest = () => {
 
         try {
             const requestData = {
-                requestTypeId: selectedRequestType.id,
+                serviceId: selectedRequestType.id,
                 categoryId: selectedCategory.id,
                 title: formData.title,
                 description: formData.description,

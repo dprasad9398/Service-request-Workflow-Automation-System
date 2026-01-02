@@ -53,8 +53,13 @@ public class ServiceCatalogService {
     /**
      * Get all services
      */
+    @Transactional(readOnly = true)
     public List<ServiceCatalogDTO> getAllServices() {
-        return serviceCatalogRepository.findAll().stream()
+        System.out.println("Fetching all services...");
+        List<ServiceCatalog> services = serviceCatalogRepository.findAll();
+        System.out.println("Found " + services.size() + " services in DB.");
+
+        return services.stream()
                 .map(this::mapServiceToDTO)
                 .collect(Collectors.toList());
     }

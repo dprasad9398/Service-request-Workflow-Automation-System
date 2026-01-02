@@ -8,30 +8,28 @@ import api from '../api/axios';
 const categoryService = {
     /**
      * Get all active service categories
-     * GET /api/service-categories
+     * GET /api/user/service-catalog/categories
      */
     getCategories: async () => {
-        console.log('📡 API Call: GET /api/service-categories');
+        console.log('📡 API Call: GET /api/user/service-catalog/categories');
         try {
-            const response = await api.get('/service-categories');
+            const response = await api.get('/user/service-catalog/categories');
             console.log('✅ Categories loaded:', response.data.length, 'categories');
-            console.log('Categories:', response.data);
             return response.data;
         } catch (error) {
             console.error('❌ Error loading categories:', error);
-            console.error('Error details:', error.response?.data);
             throw error;
         }
     },
 
     /**
      * Get category by ID
-     * GET /api/service-categories/{id}
+     * GET /api/user/service-catalog/categories/{id}
      */
     getCategoryById: async (categoryId) => {
-        console.log(`📡 API Call: GET /api/service-categories/${categoryId}`);
+        console.log(`📡 API Call: GET /api/user/service-catalog/categories/${categoryId}`);
         try {
-            const response = await api.get(`/service-categories/${categoryId}`);
+            const response = await api.get(`/user/service-catalog/categories/${categoryId}`);
             console.log('✅ Category loaded:', response.data);
             return response.data;
         } catch (error) {
@@ -41,38 +39,37 @@ const categoryService = {
     },
 
     /**
-     * Get request types for a category
-     * GET /api/service-categories/{categoryId}/types
+     * Get request types for a category (Mapping to Services now)
+     * GET /api/user/service-catalog/categories/{categoryId}/services
      */
     getCategoryTypes: async (categoryId) => {
-        console.log(`📡 API Call: GET /api/service-categories/${categoryId}/types`);
+        console.log(`📡 API Call: GET /api/user/service-catalog/categories/${categoryId}/services`);
         try {
-            const response = await api.get(`/service-categories/${categoryId}/types`);
-            console.log('✅ Request types loaded:', response.data.length, 'types');
-            console.log('Request types:', response.data);
+            const response = await api.get(`/user/service-catalog/categories/${categoryId}/services`);
+            console.log('✅ Services loaded:', response.data.length, 'services');
             return response.data;
         } catch (error) {
-            console.error(`❌ Error loading request types for category ${categoryId}:`, error);
-            console.error('Error details:', error.response?.data);
+            console.error(`❌ Error loading services for category ${categoryId}:`, error);
             throw error;
         }
     },
 
     /**
      * Get all active request types
-     * GET /api/service-categories/types/all
+     * GET /api/user/service-catalog/services
      */
     getAllTypes: async () => {
-        console.log('📡 API Call: GET /api/service-categories/types/all');
+        console.log('📡 API Call: GET /api/user/service-catalog/services');
         try {
-            const response = await api.get('/service-categories/types/all');
-            console.log('✅ All request types loaded:', response.data.length, 'types');
+            const response = await api.get('/user/service-catalog/services');
+            console.log('✅ All services loaded:', response.data.length, 'services');
             return response.data;
         } catch (error) {
-            console.error('❌ Error loading all request types:', error);
+            console.error('❌ Error loading all services:', error);
             throw error;
         }
     }
 };
 
 export default categoryService;
+

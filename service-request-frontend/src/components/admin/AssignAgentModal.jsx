@@ -10,7 +10,7 @@ import {
     CircularProgress,
     Alert
 } from '@mui/material';
-import userService from '../../services/userService';
+import adminRequestService from '../../services/adminRequestService';
 
 /**
  * Modal for assigning an agent to a request
@@ -23,7 +23,7 @@ const AssignAgentModal = ({ open, onClose, request, onAssign }) => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (open) {
+        if (open && request) {
             loadAgents();
             // Pre-select current agent if exists
             if (request?.assignedAgentId) {
@@ -37,22 +37,19 @@ const AssignAgentModal = ({ open, onClose, request, onAssign }) => {
     }, [open, request]);
 
     const loadAgents = async () => {
+        if (!request || !request.departmentId) {
+            setError('Request is not assigned to a department. Assign department first.');
+            setAgents([]);
+            return;
+        }
+
         setLoading(true);
         try {
-            // Get all users with ROLE_AGENT or ROLE_DEPARTMENT
-            const allUsers = await userService.getAllUsers();
-            // Filter for agents/department users
-            const agentUsers = allUsers.filter(user =>
-                user.roles?.some(role =>
-                    role === 'ROLE_AGENT' ||
-                    role === 'ROLE_DEPARTMENT' ||
-                    role === 'ROLE_ADMIN'
-                )
-            );
+            const agentUsers = await adminRequestService.getAgentsByDepartment(request.departmentId);
             setAgents(agentUsers);
         } catch (err) {
-            setError('Failed to load agents');
-            console.error('Error loading agents:', err);
+            setError(err.response?.data?.message || 'Failed to load agents');
+            // console.error('Error loading agents:', err);
         } finally {
             setLoading(false);
         }

@@ -44,6 +44,16 @@ public class UserServiceCatalogController {
     }
 
     /**
+     * Get category by ID
+     * GET /api/user/service-catalog/categories/{id}
+     */
+    @GetMapping("/categories/{id}")
+    public ResponseEntity<ServiceCategoryDTO> getCategoryById(@PathVariable Long id) {
+        ServiceCategoryDTO category = serviceCatalogService.getCategoryById(id);
+        return ResponseEntity.ok(category);
+    }
+
+    /**
      * Get all active services
      * GET /api/user/service-catalog/services
      */

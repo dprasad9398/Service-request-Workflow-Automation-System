@@ -9,6 +9,7 @@ com\servicedesk\controller\DepartmentRequestController.class
 com\servicedesk\entity\WorkflowInstance.class
 com\servicedesk\entity\SLA.class
 com\servicedesk\util\PasswordHashGenerator.class
+com\servicedesk\controller\AdminCategoryController.class
 com\servicedesk\repository\ServiceCategoryRepository.class
 com\servicedesk\repository\WorkflowStepRepository.class
 com\servicedesk\dto\AdminRequestDTO.class
@@ -69,6 +70,8 @@ com\servicedesk\service\SystemSettingsService.class
 com\servicedesk\dto\UpdatePriorityDTO.class
 com\servicedesk\repository\RequestStatusHistoryRepository.class
 com\servicedesk\dto\AssignRequestDTO.class
+com\servicedesk\service\ServiceCatalogService.class
+com\servicedesk\controller\AdminServiceCatalogController.class
 com\servicedesk\dto\UpdateProfileDTO.class
 com\servicedesk\controller\AdminController.class
 com\servicedesk\controller\SystemSettingsController.class
@@ -106,6 +109,7 @@ com\servicedesk\event\RequestStatusChangeEvent.class
 com\servicedesk\service\UserService.class
 com\servicedesk\service\WebSocketService.class
 com\servicedesk\entity\WorkflowStep.class
+com\servicedesk\controller\UserServiceCatalogController.class
 com\servicedesk\dto\RegisterRequest.class
 com\servicedesk\entity\ServiceCategory.class
 com\servicedesk\config\SecurityConfig.class

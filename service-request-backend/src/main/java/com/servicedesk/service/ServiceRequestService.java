@@ -88,6 +88,9 @@ public class ServiceRequestService {
     private SLATrackingRepository slaTrackingRepository;
 
     @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
     private WorkflowRepository workflowRepository;
 
     @Autowired
@@ -127,7 +130,8 @@ public class ServiceRequestService {
 
         // Handle request type (support both requestTypeId and legacy typeId)
         Long typeId = requestDTO.getRequestTypeId() != null ? requestDTO.getRequestTypeId() : requestDTO.getTypeId();
-        if (typeId != null) {
+        // Only set request type if serviceId is NOT provided (legacy flow)
+        if (typeId != null && requestDTO.getServiceId() == null) {
             logger.info("Setting request type: {}", typeId);
             RequestType requestType = requestTypeRepository.findById(typeId)
                     .orElseThrow(() -> new ResourceNotFoundException("RequestType", "id", typeId));
@@ -143,6 +147,25 @@ public class ServiceRequestService {
                     .orElseThrow(() -> new ResourceNotFoundException("Service", "id", requestDTO.getServiceId()));
             request.setService(service);
             logger.info("Service set: {}", service.getName());
+
+            // Auto-assign Department from Service Catalog
+            if (service.getDepartment() != null && !service.getDepartment().isEmpty()) {
+                String deptName = service.getDepartment().trim();
+                logger.debug("Looking up department: '{}' (case-insensitive)", deptName);
+
+                Department dept = departmentRepository.findByNameIgnoreCase(deptName)
+                        .orElse(null);
+
+                if (dept != null) {
+                    request.setDepartment(dept);
+                    request.setStatus(ServiceRequest.RequestStatus.ASSIGNED); // Auto-assign to Department Queue
+                    logger.info("Auto-assigned department: {} (ID: {})", dept.getName(), dept.getId());
+                } else {
+                    logger.warn(
+                            "Department '{}' defined in Service Catalog NOT FOUND in Department table. Request will be unassigned.",
+                            deptName);
+                }
+            }
         } else {
             logger.info("No service specified - category/request-type-based request");
         }

@@ -3,6 +3,7 @@ package com.servicedesk.controller;
 import com.servicedesk.dto.ApiResponse;
 import com.servicedesk.dto.ServiceCatalogDTO;
 import com.servicedesk.dto.ServiceCategoryDTO;
+import com.servicedesk.entity.ServiceCategory;
 import com.servicedesk.service.ServiceCatalogService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

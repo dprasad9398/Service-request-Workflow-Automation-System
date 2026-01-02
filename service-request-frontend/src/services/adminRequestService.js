@@ -96,6 +96,16 @@ const adminRequestService = {
     deleteRequest: async (requestId) => {
         const response = await api.delete(`/admin/requests/${requestId}`);
         return response.data;
+    },
+
+    /**
+     * Get agents by department
+     */
+    getAgentsByDepartment: async (departmentId) => {
+        const response = await api.get('/admin/requests/agents', {
+            params: { departmentId }
+        });
+        return response.data;
     }
 };
 
