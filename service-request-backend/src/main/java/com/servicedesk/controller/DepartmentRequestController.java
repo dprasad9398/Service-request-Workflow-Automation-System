@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/department/requests")
+@RequestMapping("/department/actions/requests")
 @CrossOrigin(origins = "*")
 @PreAuthorize("hasRole('ROLE_DEPARTMENT') or hasRole('ROLE_ADMIN')")
 public class DepartmentRequestController {

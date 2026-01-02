@@ -63,6 +63,7 @@ com\servicedesk\service\ReportsService.class
 com\servicedesk\dto\JwtAuthResponse.class
 com\servicedesk\security\JwtTokenProvider.class
 com\servicedesk\util\GenerateAdminPassword.class
+com\servicedesk\controller\DepartmentDashboardController.class
 com\servicedesk\entity\RequestAttachment.class
 com\servicedesk\entity\SystemSettings.class
 com\servicedesk\security\JwtAuthenticationEntryPoint.class

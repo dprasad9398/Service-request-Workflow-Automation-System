@@ -19,6 +19,7 @@ public class AutoAssignmentService {
     private final CategoryDepartmentMappingRepository mappingRepository;
     private final ServiceRequestRepository requestRepository;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     /**
      * Auto-assign request to department based on category
@@ -41,7 +42,23 @@ public class AutoAssignmentService {
 
             // Assign to department
             request.setDepartment(mapping.getDepartment());
-            request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
+
+            // Assign to 'phani' (try exact match first, then fuzzy match)
+            userRepository.findByUsername("phani")
+                    .or(() -> userRepository.findAll().stream()
+                            .filter(u -> u.getUsername().toLowerCase().contains("phani"))
+                            .findFirst())
+                    .ifPresentOrElse(
+                            user -> {
+                                request.setAssignedTo(user);
+                                request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
+                                log.info("Request #{} auto-assigned to user: phani", request.getId());
+                            },
+                            () -> {
+                                request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
+                                log.warn("User 'phani' not found for auto-assignment");
+                            });
+
             requestRepository.save(request);
 
             log.info("Request #{} auto-assigned to department: {}",

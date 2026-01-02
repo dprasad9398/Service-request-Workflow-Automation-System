@@ -61,8 +61,8 @@ const DepartmentDashboard = () => {
         try {
             const status = getStatusFilter();
             const data = await departmentRequestService.getDepartmentRequests({ status }, page);
-            setRequests(data.requests || []);
-            setTotalItems(data.totalItems || 0);
+            setRequests(data.content || data.requests || []); // Handle both Page object and custom map
+            setTotalItems(data.totalElements || data.totalItems || 0);
         } catch (error) {
             console.error("Failed to load department requests", error);
         } finally {
@@ -266,10 +266,12 @@ const DepartmentDashboard = () => {
                                 onChange={(e) => setNewStatus(e.target.value)}
                                 margin="normal"
                             >
+                                <MenuItem value="ASSIGNED">Assigned</MenuItem>
                                 <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
                                 <MenuItem value="WAITING_FOR_USER">Waiting for User</MenuItem>
                                 <MenuItem value="RESOLVED">Resolved</MenuItem>
                                 <MenuItem value="PENDING_APPROVAL">Pending Approval</MenuItem>
+                                <MenuItem value="APPROVED">Approved</MenuItem>
                                 <MenuItem value="REJECTED">Rejected</MenuItem>
                             </TextField>
                             <TextField

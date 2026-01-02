@@ -74,6 +74,30 @@ public class DepartmentRequestService {
         return new PageImpl<>(dtos, pageable, requests.getTotalElements());
     }
 
+    public Page<AdminRequestDTO> getAssignedRequests(String username, String status, Pageable pageable) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Specification<ServiceRequest> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Filter by assigned user
+            predicates.add(cb.equal(root.get("assignedTo").get("id"), user.getId()));
+
+            // Filter by status if provided
+            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+                predicates.add(cb.equal(root.get("status"), ServiceRequest.RequestStatus.valueOf(status)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<ServiceRequest> requests = requestRepository.findAll(spec, pageable);
+        List<AdminRequestDTO> dtos = requests.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, requests.getTotalElements());
+    }
+
     public AdminRequestDTO updateStatus(Long requestId, UpdateStatusDTO dto) {
         ServiceRequest request = getRequestForDepartment(requestId);
 
@@ -144,8 +168,15 @@ public class DepartmentRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("Request not found"));
 
         User currentUser = getCurrentUser();
-        if (request.getDepartment() == null ||
-                !request.getDepartment().getName().equals(currentUser.getDepartment())) {
+
+        // Allow if request is assigned to the current user
+        if (request.getAssignedTo() != null && request.getAssignedTo().getId().equals(currentUser.getId())) {
+            return request;
+        }
+
+        // Otherwise check department match
+        if (request.getDepartment() == null || currentUser.getDepartment() == null ||
+                !request.getDepartment().getName().equalsIgnoreCase(currentUser.getDepartment())) {
             throw new IllegalArgumentException("Access denied: Request does not belong to your department");
         }
         return request;

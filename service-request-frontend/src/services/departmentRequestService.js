@@ -10,7 +10,7 @@ const departmentRequestService = {
             page,
             size
         };
-        const response = await api.get('/department/requests', { params });
+        const response = await api.get('/department/dashboard/assigned-requests', { params });
         return response.data;
     },
 
@@ -18,7 +18,7 @@ const departmentRequestService = {
      * Update request status (e.g., IN_PROGRESS, WAITING_FOR_USER)
      */
     updateStatus: async (requestId, status, notes) => {
-        const response = await api.put(`/department/requests/${requestId}/status`, {
+        const response = await api.put(`/department/actions/requests/${requestId}/status`, {
             status,
             notes
         });
@@ -29,7 +29,7 @@ const departmentRequestService = {
      * Resolve a request
      */
     resolveRequest: async (requestId, resolutionNotes) => {
-        const response = await api.post(`/department/requests/${requestId}/resolve`, {
+        const response = await api.post(`/department/actions/requests/${requestId}/resolve`, {
             resolutionNotes
         });
         return response.data;
@@ -39,7 +39,7 @@ const departmentRequestService = {
      * Approve a request
      */
     approveRequest: async (requestId, notes) => {
-        const response = await api.put(`/department/requests/${requestId}/approve`, {
+        const response = await api.put(`/department/actions/requests/${requestId}/approve`, {
             notes
         });
         return response.data;
@@ -49,7 +49,7 @@ const departmentRequestService = {
      * Reject a request
      */
     rejectRequest: async (requestId, rejectionReason) => {
-        const response = await api.put(`/department/requests/${requestId}/reject`, {
+        const response = await api.put(`/department/actions/requests/${requestId}/reject`, {
             rejectionReason
         });
         return response.data;
