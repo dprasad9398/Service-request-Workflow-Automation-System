@@ -1,6 +1,7 @@
 # Database scripts
 *.bat
 *.sql
+!database/**/*.sql
 
 # Temporary files
 *.tmp

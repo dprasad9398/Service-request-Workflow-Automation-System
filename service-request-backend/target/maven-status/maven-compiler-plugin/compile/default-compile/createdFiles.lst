@@ -24,6 +24,7 @@ com\servicedesk\dto\ServiceRequestDTO.class
 com\servicedesk\dto\AssignDepartmentDTO.class
 com\servicedesk\entity\Workflow.class
 com\servicedesk\security\CustomUserDetailsService.class
+com\servicedesk\controller\EmailSettingsController.class
 com\servicedesk\dto\AdminRequestDetailDTO.class
 com\servicedesk\service\NotificationService.class
 com\servicedesk\controller\ServiceCategoryController.class
@@ -53,6 +54,7 @@ com\servicedesk\service\SLAService.class
 com\servicedesk\dto\BulkAssignmentDTO.class
 com\servicedesk\entity\RequestComment.class
 com\servicedesk\service\AutoAssignmentService.class
+com\servicedesk\repository\EmailConfigRepository.class
 com\servicedesk\dto\ActivityLogDTO.class
 com\servicedesk\controller\AuthController.class
 com\servicedesk\exception\ResourceNotFoundException.class
@@ -65,6 +67,7 @@ com\servicedesk\security\JwtTokenProvider.class
 com\servicedesk\util\GenerateAdminPassword.class
 com\servicedesk\controller\DepartmentDashboardController.class
 com\servicedesk\entity\RequestAttachment.class
+com\servicedesk\dto\TestEmailRequest.class
 com\servicedesk\entity\SystemSettings.class
 com\servicedesk\security\JwtAuthenticationEntryPoint.class
 com\servicedesk\service\SystemSettingsService.class
@@ -77,6 +80,7 @@ com\servicedesk\dto\UpdateProfileDTO.class
 com\servicedesk\controller\AdminController.class
 com\servicedesk\controller\SystemSettingsController.class
 com\servicedesk\util\TicketIdGenerator.class
+com\servicedesk\entity\EmailAuditLog.class
 com\servicedesk\entity\ServiceRequest$RequestStatus.class
 com\servicedesk\entity\AuditLog.class
 com\servicedesk\repository\RequestTypeRepository.class
@@ -102,9 +106,11 @@ com\servicedesk\service\SLAMonitoringService$SLAStatistics.class
 com\servicedesk\controller\DebugUserController.class
 com\servicedesk\dto\ResolveRequestDTO.class
 com\servicedesk\entity\SLATracking.class
+com\servicedesk\repository\EmailAuditLogRepository.class
 com\servicedesk\service\ServiceRequestService.class
 com\servicedesk\dto\EscalateRequestDTO.class
 com\servicedesk\service\EmailService.class
+com\servicedesk\dto\EmailSettingsDTO.class
 com\servicedesk\entity\Role.class
 com\servicedesk\event\RequestStatusChangeEvent.class
 com\servicedesk\service\UserService.class
@@ -116,6 +122,7 @@ com\servicedesk\entity\ServiceCategory.class
 com\servicedesk\config\SecurityConfig.class
 com\servicedesk\security\CustomAccessDeniedHandler.class
 com\servicedesk\repository\ActivityLogRepository.class
+com\servicedesk\entity\EmailConfig.class
 com\servicedesk\entity\ApprovalHistory$ApprovalAction.class
 com\servicedesk\controller\ServiceRequestController.class
 com\servicedesk\entity\Notification.class

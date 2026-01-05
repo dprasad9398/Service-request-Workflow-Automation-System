@@ -42,6 +42,30 @@ const settingsService = {
             settings
         });
         return response.data;
+    },
+
+    /**
+     * Get email configuration
+     */
+    getEmailConfig: async () => {
+        const response = await api.get('/settings/email-config');
+        return response.data;
+    },
+
+    /**
+     * Save email configuration
+     */
+    saveEmailConfig: async (config) => {
+        const response = await api.post('/settings/email-config', config);
+        return response.data;
+    },
+
+    /**
+     * Test email configuration
+     */
+    sendTestEmail: async (toEmail) => {
+        const response = await api.post('/settings/email-config/test', { to: toEmail });
+        return response.data;
     }
 };
 

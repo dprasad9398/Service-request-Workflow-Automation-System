@@ -25,6 +25,9 @@ public class ServiceRequestService {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ServiceRequestService.class);
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
@@ -175,8 +178,10 @@ public class ServiceRequestService {
             request.setStatus(ServiceRequest.RequestStatus.PENDING_APPROVAL);
             logger.info("Status set to PENDING_APPROVAL (service requires approval)");
         } else {
-            request.setStatus(ServiceRequest.RequestStatus.NEW);
-            logger.info("Status set to NEW");
+            if (request.getStatus() == null) { // Might have been set to ASSIGNED above
+                request.setStatus(ServiceRequest.RequestStatus.NEW);
+            }
+            logger.info("Status set to {}", request.getStatus());
         }
 
         ServiceRequest savedRequest = serviceRequestRepository.save(request);
@@ -190,6 +195,13 @@ public class ServiceRequestService {
 
         // Trigger workflow if exists
         triggerWorkflow(savedRequest);
+
+        // Send Email Notification
+        try {
+            emailService.sendRequestCreatedEmail(savedRequest);
+        } catch (Exception e) {
+            logger.error("Failed to send created email for request " + savedRequest.getTicketId(), e);
+        }
 
         logger.info("=== SERVICE REQUEST CREATED SUCCESSFULLY ===");
         return savedRequest;
@@ -276,6 +288,13 @@ public class ServiceRequestService {
             logger.error("Failed to publish status change event for request #{}", id, e);
         }
 
+        // Send Email Notification
+        try {
+            emailService.sendRequestStatusUpdateEmail(saved);
+        } catch (Exception e) {
+            logger.error("Failed to send status update email for request " + saved.getTicketId(), e);
+        }
+
         return saved;
     }
 
@@ -290,7 +309,16 @@ public class ServiceRequestService {
         request.setAssignedTo(agent);
         request.setStatus(ServiceRequest.RequestStatus.ASSIGNED);
 
-        return serviceRequestRepository.save(request);
+        ServiceRequest saved = serviceRequestRepository.save(request);
+
+        // Send Email Notification
+        try {
+            emailService.sendRequestAssignedEmail(saved);
+        } catch (Exception e) {
+            logger.error("Failed to send assignment email for request " + saved.getTicketId(), e);
+        }
+
+        return saved;
     }
 
     /**

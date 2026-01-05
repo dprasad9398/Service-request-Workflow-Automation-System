@@ -22,12 +22,16 @@ const SystemSettings = () => {
 
     // Email settings
     const [emailSettings, setEmailSettings] = useState({
-        smtp_host: '',
-        smtp_port: '',
-        smtp_username: '',
-        smtp_password: '',
-        from_email: ''
+        host: '',
+        port: '',
+        username: '',
+        password: '',
+        fromEmail: '',
+        protocol: 'smtp'
     });
+
+    // Test Email Dialog
+    const [testEmailAddress, setTestEmailAddress] = useState('');
 
     // SLA settings
     const [slaSettings, setSlaSettings] = useState({
@@ -54,15 +58,21 @@ const SystemSettings = () => {
             const settings = await settingsService.getAllSettings();
 
             // Group settings by category
+            // Load generic settings (SLA, Notifications)
+            // Load generic settings (SLA, Notifications)
             settings.forEach(setting => {
-                if (setting.category === 'EMAIL') {
-                    setEmailSettings(prev => ({ ...prev, [setting.settingKey]: setting.settingValue }));
-                } else if (setting.category === 'SLA') {
+                if (setting.category === 'SLA') {
                     setSlaSettings(prev => ({ ...prev, [setting.settingKey]: setting.settingValue }));
                 } else if (setting.category === 'NOTIFICATION') {
                     setNotificationSettings(prev => ({ ...prev, [setting.settingKey]: setting.settingValue }));
                 }
             });
+
+            // Load Email Settings
+            const emailConfig = await settingsService.getEmailConfig();
+            if (emailConfig) {
+                setEmailSettings(emailConfig);
+            }
         } catch (error) {
             showSnackbar('Failed to load settings', 'error');
         } finally {
@@ -72,10 +82,26 @@ const SystemSettings = () => {
 
     const handleSaveEmail = async () => {
         try {
-            await settingsService.bulkUpdateSettings('EMAIL', emailSettings);
+            await settingsService.saveEmailConfig(emailSettings);
             showSnackbar('Email settings saved successfully');
         } catch (error) {
             showSnackbar('Failed to save email settings', 'error');
+        }
+    };
+
+    const handleTestEmail = async () => {
+        if (!testEmailAddress) {
+            showSnackbar('Please enter an email address to test', 'warning');
+            return;
+        }
+        setLoading(true);
+        try {
+            await settingsService.sendTestEmail(testEmailAddress);
+            showSnackbar('Test email sent successfully');
+        } catch (error) {
+            showSnackbar('Failed to send test email: ' + (error.response?.data || error.message), 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -134,24 +160,24 @@ const SystemSettings = () => {
                                 <TextField
                                     fullWidth
                                     label="SMTP Host"
-                                    value={emailSettings.smtp_host}
-                                    onChange={(e) => setEmailSettings({ ...emailSettings, smtp_host: e.target.value })}
+                                    value={emailSettings.host}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, host: e.target.value })}
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
                                     label="SMTP Port"
-                                    value={emailSettings.smtp_port}
-                                    onChange={(e) => setEmailSettings({ ...emailSettings, smtp_port: e.target.value })}
+                                    value={emailSettings.port}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, port: e.target.value })}
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
                                     label="Username"
-                                    value={emailSettings.smtp_username}
-                                    onChange={(e) => setEmailSettings({ ...emailSettings, smtp_username: e.target.value })}
+                                    value={emailSettings.username}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, username: e.target.value })}
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
@@ -159,21 +185,46 @@ const SystemSettings = () => {
                                     fullWidth
                                     type="password"
                                     label="Password"
-                                    value={emailSettings.smtp_password}
-                                    onChange={(e) => setEmailSettings({ ...emailSettings, smtp_password: e.target.value })}
+                                    value={emailSettings.password}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, password: e.target.value })}
+                                    helperText={emailSettings.password === '********' ? 'Password is set (masked). Change to update.' : ''}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
                                     label="From Email"
-                                    value={emailSettings.from_email}
-                                    onChange={(e) => setEmailSettings({ ...emailSettings, from_email: e.target.value })}
+                                    value={emailSettings.fromEmail}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, fromEmail: e.target.value })}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Protocol"
+                                    value={emailSettings.protocol}
+                                    onChange={(e) => setEmailSettings({ ...emailSettings, protocol: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 <Button variant="contained" startIcon={<Save />} onClick={handleSaveEmail}>
                                     Save Email Settings
+                                </Button>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Test Connection</Typography>
+                            </Grid>
+                            <Grid item xs={12} md={8} sx={{ display: 'flex', gap: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Test Email Recipient"
+                                    placeholder="Enter email to receive test"
+                                    value={testEmailAddress}
+                                    onChange={(e) => setTestEmailAddress(e.target.value)}
+                                />
+                                <Button variant="outlined" onClick={handleTestEmail} disabled={!testEmailAddress}>
+                                    Send Test Email
                                 </Button>
                             </Grid>
                         </Grid>

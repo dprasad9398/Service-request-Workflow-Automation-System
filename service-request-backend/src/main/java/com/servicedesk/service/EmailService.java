@@ -1,358 +1,176 @@
 package com.servicedesk.service;
 
-import com.servicedesk.entity.Department;
+import com.servicedesk.entity.EmailAuditLog;
+import com.servicedesk.entity.EmailConfig;
 import com.servicedesk.entity.ServiceRequest;
-import com.servicedesk.entity.User;
-import jakarta.mail.MessagingException;
+import com.servicedesk.repository.EmailAuditLogRepository;
+import com.servicedesk.repository.EmailConfigRepository;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Email Service
- * Handles automated email notifications
- */
+import java.time.LocalDateTime;
+import java.util.Properties;
+
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    /**
-     * Send request created email to user
-     */
+    @Autowired
+    private EmailConfigRepository emailConfigRepository;
+
+    @Autowired
+    private EmailAuditLogRepository emailAuditLogRepository;
+
+    private JavaMailSenderImpl javaMailSender;
+
+    @PostConstruct
+    public void init() {
+        refreshMailSender();
+    }
+
+    public synchronized void refreshMailSender() {
+        EmailConfig config = emailConfigRepository.findFirstByOrderByIdAsc().orElse(null);
+        if (config == null) {
+            logger.warn("No email configuration found in database.");
+            return;
+        }
+
+        JavaMailSenderImpl sender = new JavaMailSenderImpl();
+        sender.setHost(config.getHost());
+        sender.setPort(config.getPort());
+        sender.setUsername(config.getUsername());
+        sender.setPassword(config.getPassword());
+        sender.setProtocol(config.getProtocol());
+
+        Properties props = sender.getJavaMailProperties();
+        props.put("mail.transport.protocol", config.getProtocol());
+        props.put("mail.smtp.auth", "true");
+        // StartTLS logic
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "true");
+        props.put("mail.debug", "true");
+
+        // Trust all certs logic might be needed for dev environments, but trying
+        // standard first
+        // props.put("mail.smtp.ssl.trust", "*");
+
+        this.javaMailSender = sender;
+        logger.info("JavaMailSender initialized with host: {}", config.getHost());
+    }
+
     @Async
+    public void sendEmail(String to, String subject, String content, Long requestId, String triggeredBy) {
+        if (javaMailSender == null) {
+            logger.error("Email sender not initialized. Cannot send email to {}", to);
+            logEmail(to, subject, content, "FAILED", "Email sender not initialized", requestId, triggeredBy);
+            return;
+        }
+
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            EmailConfig config = emailConfigRepository.findFirstByOrderByIdAsc().orElseThrow();
+            helper.setFrom(config.getFromEmail());
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, true); // true = html
+
+            javaMailSender.send(message);
+            logger.info("Email sent to {} with subject: {}", to, subject);
+
+            logEmail(to, subject, content, "SENT", null, requestId, triggeredBy);
+
+        } catch (Exception e) {
+            logger.error("Failed to send email to {}", to, e);
+            logEmail(to, subject, content, "FAILED", e.getMessage(), requestId, triggeredBy);
+        }
+    }
+
+    private void logEmail(String to, String subject, String body, String status, String error, Long requestId,
+            String triggeredBy) {
+        try {
+            EmailAuditLog log = new EmailAuditLog();
+            log.setRecipient(to);
+            log.setSubject(subject);
+            log.setBody(body); // Limit body length if needed
+            log.setStatus(status);
+            log.setErrorMessage(error);
+            log.setRequestId(requestId);
+            log.setTriggeredBy(triggeredBy);
+            log.setSentAt(LocalDateTime.now());
+            emailAuditLogRepository.save(log);
+        } catch (Exception e) {
+            logger.error("Failed to save email audit log", e);
+        }
+    }
+
+    // Quick test method
+    public void sendTestEmail(String to) {
+        refreshMailSender(); // Ensure latest config
+        sendEmail(to, "Test Email from Service Request System",
+                "<h1>Test Email</h1><p>This is a test email to verify SMTP validation.</p>",
+                null, "TEST_USER");
+    }
+
     public void sendRequestCreatedEmail(ServiceRequest request) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String subject = "Request Created: " + request.getTicketId() + " - " + request.getTitle();
+        String body = buildRequestEmailBody(request, "A new service request has been created.");
+        sendEmail(request.getRequester().getEmail(), subject, body, request.getId(), "SYSTEM");
 
-            helper.setTo(request.getRequester().getEmail());
-            helper.setSubject("Request #" + request.getId() + " Created Successfully");
-
-            String htmlContent = buildRequestCreatedEmail(request);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            log.info("Request created email sent to {} for request #{}",
-                    request.getRequester().getEmail(),
-                    request.getId());
-
-        } catch (MessagingException e) {
-            log.error("Failed to send request created email for request #{}", request.getId(), e);
-        } catch (Exception e) {
-            log.error("Email service not configured or error sending email", e);
+        // Notify department if assigned
+        if (request.getDepartment() != null && request.getStatus() == ServiceRequest.RequestStatus.ASSIGNED) {
+            // For now, we will just log that we would notify department users
+            // Integration with User repository to find department users will be added
         }
     }
 
-    /**
-     * Send status change email
-     */
-    @Async
-    public void sendStatusChangeEmail(ServiceRequest request, String oldStatus) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    public void sendRequestStatusUpdateEmail(ServiceRequest request) {
+        String subject = "Status Update: " + request.getTicketId() + " - " + request.getStatus();
+        String body = buildRequestEmailBody(request, "Your request status has been updated to " + request.getStatus());
+        sendEmail(request.getRequester().getEmail(), subject, body, request.getId(), "SYSTEM");
+    }
 
-            helper.setTo(request.getRequester().getEmail());
-            helper.setSubject("Request #" + request.getId() + " Status Updated");
+    public void sendRequestAssignedEmail(ServiceRequest request) {
+        String subject = "Request Assigned: " + request.getTicketId();
+        String body = buildRequestEmailBody(request, "Your request has been assigned to an agent.");
+        sendEmail(request.getRequester().getEmail(), subject, body, request.getId(), "SYSTEM");
 
-            String htmlContent = buildStatusChangeEmail(request, oldStatus);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            log.info("Status change email sent to {} for request #{}",
-                    request.getRequester().getEmail(),
-                    request.getId());
-
-        } catch (MessagingException e) {
-            log.error("Failed to send status change email for request #{}", request.getId(), e);
-        } catch (Exception e) {
-            log.error("Email service not configured or error sending email", e);
+        if (request.getAssignedAgent() != null) {
+            sendEmail(request.getAssignedAgent().getEmail(),
+                    "Assigned New Request: " + request.getTicketId(),
+                    buildRequestEmailBody(request, "You have been assigned this request."),
+                    request.getId(), "SYSTEM");
         }
     }
 
-    /**
-     * Send SLA breach alert email
-     */
-    @Async
-    public void sendSLABreachEmail(ServiceRequest request) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            // Send to management/admin
-            helper.setTo("admin@example.com"); // Configure this
-            helper.setSubject("SLA BREACH ALERT - Request #" + request.getId());
-
-            String htmlContent = buildSLABreachEmail(request);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            log.info("SLA breach email sent for request #{}", request.getId());
-
-        } catch (MessagingException e) {
-            log.error("Failed to send SLA breach email for request #{}", request.getId(), e);
-        } catch (Exception e) {
-            log.error("Email service not configured or error sending email", e);
+    private String buildRequestEmailBody(ServiceRequest request, String message) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><body>");
+        sb.append("<h2>Service Request Update</h2>");
+        sb.append("<p>").append(message).append("</p>");
+        sb.append("<table border='1' cellpadding='5' style='border-collapse: collapse;'>");
+        sb.append("<tr><td><b>Ticket ID</b></td><td>").append(request.getTicketId()).append("</td></tr>");
+        sb.append("<tr><td><b>Title</b></td><td>").append(request.getTitle()).append("</td></tr>");
+        sb.append("<tr><td><b>Status</b></td><td>").append(request.getStatus()).append("</td></tr>");
+        sb.append("<tr><td><b>Priority</b></td><td>").append(request.getPriority()).append("</td></tr>");
+        sb.append("<tr><td><b>Description</b></td><td>").append(request.getDescription()).append("</td></tr>");
+        if (request.getDepartment() != null) {
+            sb.append("<tr><td><b>Department</b></td><td>").append(request.getDepartment().getName())
+                    .append("</td></tr>");
         }
-    }
-
-    /**
-     * Send assignment notification email
-     */
-    @Async
-    public void sendAssignmentEmail(ServiceRequest request, Department department) {
-        try {
-            if (department.getEmail() == null || department.getEmail().isEmpty()) {
-                log.warn("Department {} has no email configured", department.getName());
-                return;
-            }
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(department.getEmail());
-            helper.setSubject("New Request Assigned - #" + request.getId());
-
-            String htmlContent = buildAssignmentEmail(request, department);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-
-            log.info("Assignment email sent to {} for request #{}",
-                    department.getEmail(),
-                    request.getId());
-
-        } catch (MessagingException e) {
-            log.error("Failed to send assignment email for request #{}", request.getId(), e);
-        } catch (Exception e) {
-            log.error("Email service not configured or error sending email", e);
-        }
-    }
-
-    /**
-     * Build request created email HTML
-     */
-    private String buildRequestCreatedEmail(ServiceRequest request) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #1976d2; color: white; padding: 20px; text-align: center; }
-                        .content { padding: 20px; background-color: #f5f5f5; }
-                        .info-box { background-color: white; padding: 15px; margin: 10px 0; border-left: 4px solid #1976d2; }
-                        .button {
-                            background-color: #1976d2;
-                            color: white;
-                            padding: 12px 24px;
-                            text-decoration: none;
-                            border-radius: 5px;
-                            display: inline-block;
-                            margin-top: 20px;
-                        }
-                        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h2>Request Created Successfully</h2>
-                        </div>
-                        <div class="content">
-                            <p>Hello %s,</p>
-                            <p>Your service request has been created successfully.</p>
-
-                            <div class="info-box">
-                                <strong>Request ID:</strong> #%d<br>
-                                <strong>Title:</strong> %s<br>
-                                <strong>Category:</strong> %s<br>
-                                <strong>Priority:</strong> %s<br>
-                                <strong>Status:</strong> %s
-                            </div>
-
-                            <p>We will process your request and keep you updated on its progress.</p>
-
-                            <a href="http://localhost:3000/requests/%d" class="button">
-                                View Request Details
-                            </a>
-                        </div>
-                        <div class="footer">
-                            <p>This is an automated message. Please do not reply to this email.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                .formatted(
-                        request.getRequester().getFirstName(),
-                        request.getId(),
-                        request.getTitle(),
-                        request.getCategory() != null ? request.getCategory().getName() : "N/A",
-                        request.getPriority(),
-                        request.getStatus(),
-                        request.getId());
-    }
-
-    /**
-     * Build status change email HTML
-     */
-    private String buildStatusChangeEmail(ServiceRequest request, String oldStatus) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #1976d2; color: white; padding: 20px; text-align: center; }
-                        .content { padding: 20px; background-color: #f5f5f5; }
-                        .status-change { background-color: white; padding: 15px; margin: 10px 0; border-left: 4px solid #4caf50; }
-                        .button {
-                            background-color: #1976d2;
-                            color: white;
-                            padding: 12px 24px;
-                            text-decoration: none;
-                            border-radius: 5px;
-                            display: inline-block;
-                            margin-top: 20px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h2>Request Status Updated</h2>
-                        </div>
-                        <div class="content">
-                            <p>Hello %s,</p>
-                            <p>Your request <strong>#%d</strong> status has been updated.</p>
-
-                            <div class="status-change">
-                                <strong>Previous Status:</strong> %s<br>
-                                <strong>Current Status:</strong> %s<br>
-                                <strong>Title:</strong> %s
-                            </div>
-
-                            <a href="http://localhost:3000/requests/%d" class="button">
-                                View Request Details
-                            </a>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                .formatted(
-                        request.getRequester().getFirstName(),
-                        request.getId(),
-                        oldStatus,
-                        request.getStatus(),
-                        request.getTitle(),
-                        request.getId());
-    }
-
-    /**
-     * Build SLA breach email HTML
-     */
-    private String buildSLABreachEmail(ServiceRequest request) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #f44336; color: white; padding: 20px; text-align: center; }
-                        .content { padding: 20px; background-color: #fff3cd; }
-                        .alert { background-color: white; padding: 15px; margin: 10px 0; border-left: 4px solid #f44336; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h2>⚠️ SLA BREACH ALERT</h2>
-                        </div>
-                        <div class="content">
-                            <p><strong>IMMEDIATE ATTENTION REQUIRED</strong></p>
-
-                            <div class="alert">
-                                <strong>Request ID:</strong> #%d<br>
-                                <strong>Title:</strong> %s<br>
-                                <strong>Priority:</strong> %s<br>
-                                <strong>Department:</strong> %s<br>
-                                <strong>Status:</strong> %s
-                            </div>
-
-                            <p>This request has breached its SLA deadline and requires immediate escalation.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                .formatted(
-                        request.getId(),
-                        request.getTitle(),
-                        request.getPriority(),
-                        request.getDepartment() != null ? request.getDepartment().getName() : "Unassigned",
-                        request.getStatus());
-    }
-
-    /**
-     * Build assignment email HTML
-     */
-    private String buildAssignmentEmail(ServiceRequest request, Department department) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #1976d2; color: white; padding: 20px; text-align: center; }
-                        .content { padding: 20px; background-color: #f5f5f5; }
-                        .info-box { background-color: white; padding: 15px; margin: 10px 0; border-left: 4px solid #1976d2; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h2>New Request Assigned</h2>
-                        </div>
-                        <div class="content">
-                            <p>Hello %s Team,</p>
-                            <p>A new request has been assigned to your department.</p>
-
-                            <div class="info-box">
-                                <strong>Request ID:</strong> #%d<br>
-                                <strong>Title:</strong> %s<br>
-                                <strong>Category:</strong> %s<br>
-                                <strong>Priority:</strong> %s<br>
-                                <strong>Description:</strong> %s
-                            </div>
-
-                            <p>Please review and take appropriate action.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                .formatted(
-                        department.getName(),
-                        request.getId(),
-                        request.getTitle(),
-                        request.getCategory() != null ? request.getCategory().getName() : "N/A",
-                        request.getPriority(),
-                        request.getDescription());
+        sb.append("</table>");
+        sb.append("<p>Please login to the portal to view more details.</p>");
+        sb.append("</body></html>");
+        return sb.toString();
     }
 }

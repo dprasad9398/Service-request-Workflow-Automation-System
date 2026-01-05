@@ -4,6 +4,7 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repo
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\CategoryController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\CreateCategorizedRequestDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\exception\ResourceNotFoundException.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\EmailSettingsDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\ReportsController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\ServiceCategoryController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\DashboardCountDTO.java
@@ -29,9 +30,11 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\enti
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\WorkflowInstanceRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\util\GenerateAdminPassword.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\config\SchedulingConfig.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\EmailAuditLogRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\ApprovalController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RegisterRequest.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\WorkflowRuleRepository.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\EmailConfig.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\security\JwtAuthenticationFilter.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\WebSocketService.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\ReportsService.java
@@ -61,6 +64,8 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\list
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\util\PasswordHashGenerator.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\UpdateStatusDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\ServiceRequest.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\EmailAuditLog.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\controller\EmailSettingsController.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\RequestTypeRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\UserProfileDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ServiceRequestDTO.java
@@ -98,12 +103,14 @@ D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\CategoryDepartmentMapping.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RequestDetailsDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\WorkflowStepRepository.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\TestEmailRequest.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\RequestFilterDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ResolveRequestDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ApproveRequestDTO.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\WorkflowRule.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\dto\ApiResponse.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\event\RequestStatusChangeEvent.java
+D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\EmailConfigRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\repository\SystemSettingsRepository.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\entity\SystemSettings.java
 D:\Final year Project\service-request-backend\src\main\java\com\servicedesk\service\AdminService.java

@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 public class AdminRequestService {
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private ServiceRequestRepository requestRepository;
 
     @Autowired
@@ -132,6 +135,13 @@ public class AdminRequestService {
         System.out.println("DEBUG: Saved Request Dept: "
                 + (savedRequest.getDepartment() != null ? savedRequest.getDepartment().getName() : "NULL"));
 
+        // Trigger Email
+        try {
+            emailService.sendRequestAssignedEmail(savedRequest);
+        } catch (Exception e) {
+            log.error("Failed to send assignment email", e);
+        }
+
         return convertToDTO(savedRequest);
     }
 
@@ -178,6 +188,13 @@ public class AdminRequestService {
                 (dto.getNotes() != null ? ". Notes: " + dto.getNotes() : ""));
 
         System.out.println("✓ Request " + request.getTicketId() + " assigned to agent: " + agent.getUsername());
+
+        // Trigger Email
+        try {
+            emailService.sendRequestAssignedEmail(request);
+        } catch (Exception e) {
+            log.error("Failed to send assignment email", e);
+        }
     }
 
     /**
@@ -227,6 +244,13 @@ public class AdminRequestService {
                 (dto.getNotes() != null ? ". Notes: " + dto.getNotes() : ""));
 
         System.out.println("Request " + request.getTicketId() + " status updated to: " + newStatus);
+
+        // Trigger Email
+        try {
+            emailService.sendRequestStatusUpdateEmail(request);
+        } catch (Exception e) {
+            log.error("Failed to send status update email", e);
+        }
     }
 
     /**
@@ -334,6 +358,13 @@ public class AdminRequestService {
         System.out.println(
                 "✓ Request " + savedRequest.getTicketId() + " priority updated: " + oldPriority + " → " + newPriority);
 
+        // Trigger Email (using generic status update for now, or just notify of update)
+        try {
+            emailService.sendRequestStatusUpdateEmail(savedRequest);
+        } catch (Exception e) {
+            log.error("Failed to update email", e);
+        }
+
         return convertToDTO(savedRequest);
     }
 
@@ -375,6 +406,13 @@ public class AdminRequestService {
         logActivity(savedRequest, "ESCALATE", null, escalationDetails.toString(), dto.getNotes());
 
         System.out.println("✓ Request " + savedRequest.getTicketId() + " escalated");
+
+        // Trigger Email
+        try {
+            emailService.sendRequestStatusUpdateEmail(savedRequest);
+        } catch (Exception e) {
+            log.error("Failed to send escalation email", e);
+        }
 
         return convertToDTO(savedRequest);
     }
@@ -511,6 +549,13 @@ public class AdminRequestService {
 
                 requestRepository.save(request);
                 assignedCount++;
+
+                // Trigger Email
+                try {
+                    emailService.sendRequestAssignedEmail(request);
+                } catch (Exception e) {
+                    log.error("Failed to send bulk assignment email", e);
+                }
 
             } catch (Exception e) {
                 System.err.println("Failed to assign request " + requestId + ": " + e.getMessage());

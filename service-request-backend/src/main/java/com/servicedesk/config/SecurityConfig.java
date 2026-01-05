@@ -77,20 +77,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - no authentication required
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/debug/**").permitAll() // Debug endpoints
+                        .requestMatchers("/debug/**").permitAll() // Debug endpoints
 
                         // Admin endpoints - require ROLE_ADMIN
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/settings/**").hasRole("ADMIN") // Explicitly secure settings
 
                         // Department endpoints - require ROLE_DEPARTMENT or ROLE_ADMIN
-                        .requestMatchers("/api/department/**").hasAnyRole("DEPARTMENT", "ADMIN")
+                        .requestMatchers("/department/**").hasAnyRole("DEPARTMENT", "ADMIN")
 
                         // User endpoints - require ROLE_USER, ROLE_END_USER, or ROLE_ADMIN
-                        .requestMatchers("/api/user/**").hasAnyRole("USER", "END_USER", "ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "END_USER", "ADMIN")
 
                         // All other API endpoints require authentication
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/**").authenticated()
 
                         // Allow all other requests
                         .anyRequest().permitAll())
