@@ -40,6 +40,9 @@ public class DepartmentRequestService {
     @Autowired
     private RequestStatusHistoryRepository statusHistoryRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     public Page<AdminRequestDTO> getDepartmentRequests(String status, Pageable pageable) {
         User currentUser = getCurrentUser();
         if (currentUser.getDepartment() == null) {
@@ -125,6 +128,14 @@ public class DepartmentRequestService {
         ServiceRequest savedRequest = requestRepository.save(request);
 
         logStatusChange(savedRequest, "Request Resolved. Notes: " + dto.getResolutionNotes());
+
+        // Trigger Email
+        try {
+            emailService.sendRequestStatusUpdateEmail(savedRequest);
+        } catch (Exception e) {
+            System.err.println("Failed to send resolution email: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         return convertToDTO(savedRequest);
     }
