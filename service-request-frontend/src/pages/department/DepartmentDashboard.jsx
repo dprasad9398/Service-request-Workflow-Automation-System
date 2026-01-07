@@ -21,7 +21,8 @@ import {
     DialogActions,
     TextField,
     MenuItem,
-    Alert
+    Alert,
+    TablePagination
 } from '@mui/material';
 import { Visibility, Edit, CheckCircle, ThumbUp, ThumbDown } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,7 @@ const DepartmentDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [currentTab, setCurrentTab] = useState(0);
     const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
 
     // Action dialogs
@@ -44,7 +46,7 @@ const DepartmentDashboard = () => {
 
     useEffect(() => {
         loadRequests();
-    }, [currentTab, page]);
+    }, [currentTab, page, rowsPerPage]);
 
     const getStatusFilter = () => {
         switch (currentTab) {
@@ -60,7 +62,12 @@ const DepartmentDashboard = () => {
         setLoading(true);
         try {
             const status = getStatusFilter();
-            const data = await departmentRequestService.getDepartmentRequests({ status }, page);
+            // Force sort by createdAt descending (newest first)
+            const filters = {
+                status,
+                sort: 'createdAt,desc'
+            };
+            const data = await departmentRequestService.getDepartmentRequests(filters, page, rowsPerPage);
             setRequests(data.content || data.requests || []); // Handle both Page object and custom map
             setTotalItems(data.totalElements || data.totalItems || 0);
         } catch (error) {
@@ -72,6 +79,15 @@ const DepartmentDashboard = () => {
 
     const handleTabChange = (event, newValue) => {
         setCurrentTab(newValue);
+        setPage(0);
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
 
@@ -213,6 +229,15 @@ const DepartmentDashboard = () => {
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={totalItems}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Paper>
 
             {/* Action Dialog */}

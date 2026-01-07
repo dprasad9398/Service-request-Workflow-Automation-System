@@ -23,7 +23,7 @@ import {
     DialogContent,
     DialogActions
 } from '@mui/material';
-import { Visibility, Refresh, Close } from '@mui/icons-material';
+import { Visibility, Refresh, Close, Delete } from '@mui/icons-material';
 import requestService from '../services/requestService';
 
 const statusColors = {
@@ -55,6 +55,7 @@ const MyRequests = () => {
     const [totalElements, setTotalElements] = useState(0);
     const [filterStatus, setFilterStatus] = useState('');
     const [closeDialog, setCloseDialog] = useState({ open: false, requestId: null });
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, requestId: null });
 
     useEffect(() => {
         loadRequests();
@@ -109,6 +110,17 @@ const MyRequests = () => {
         } catch (error) {
             console.error('Failed to close request:', error);
             alert('Failed to close request: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await requestService.cancelRequest(deleteDialog.requestId);
+            setDeleteDialog({ open: false, requestId: null });
+            loadRequests();
+        } catch (error) {
+            console.error('Failed to delete request:', error);
+            alert('Failed to delete request: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -221,6 +233,16 @@ const MyRequests = () => {
                                                 >
                                                     <Visibility />
                                                 </IconButton>
+                                                {(request.status === 'NEW' || request.status === 'PENDING_APPROVAL' || request.status === 'ASSIGNED') && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={() => setDeleteDialog({ open: true, requestId: request.id })}
+                                                        title="Delete Request"
+                                                    >
+                                                        <Delete />
+                                                    </IconButton>
+                                                )}
                                                 {request.status === 'RESOLVED' && (
                                                     <IconButton
                                                         size="small"
@@ -248,6 +270,44 @@ const MyRequests = () => {
                         onRowsPerPageChange={handleChangeRowsPerPage}
                         rowsPerPageOptions={[5, 10, 25, 50]}
                     />
+
+                    {/* Close Request Dialog */}
+                    <Dialog
+                        open={closeDialog.open}
+                        onClose={() => setCloseDialog({ open: false, requestId: null })}
+                    >
+                        <DialogTitle>Confirm Close Request</DialogTitle>
+                        <DialogContent>
+                            <Typography>
+                                Are you sure you want to close this request? This action cannot be undone.
+                            </Typography>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setCloseDialog({ open: false, requestId: null })}>Cancel</Button>
+                            <Button onClick={handleCloseRequest} color="primary" autoFocus>
+                                Confirm Close
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    {/* Delete Request Dialog */}
+                    <Dialog
+                        open={deleteDialog.open}
+                        onClose={() => setDeleteDialog({ open: false, requestId: null })}
+                    >
+                        <DialogTitle>Confirm Delete Request</DialogTitle>
+                        <DialogContent>
+                            <Typography>
+                                Are you sure you want to delete this request? This will cancel the request.
+                            </Typography>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setDeleteDialog({ open: false, requestId: null })}>Cancel</Button>
+                            <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+                                Delete
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Paper>
             </Box>
         </Container>
